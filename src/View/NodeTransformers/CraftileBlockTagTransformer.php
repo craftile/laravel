@@ -12,7 +12,7 @@ use Stillat\BladeParser\Document\Document;
 use Stillat\BladeParser\Nodes\AbstractNode;
 use Stillat\BladeParser\Nodes\Components\ComponentNode;
 
-class CraftileBlockTagTransformer implements NodeTransformerInterface, ComponentCompilerAwareInterface
+class CraftileBlockTagTransformer implements ComponentCompilerAwareInterface, NodeTransformerInterface
 {
     use HandlesComponentAttributes, HandlesCraftileBlocks, HandlesErrors, HandlesLiterals;
 

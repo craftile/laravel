@@ -41,13 +41,13 @@ class DirectiveVariants
 
         return array_map(function ($variant) {
             if (ctype_upper($variant[0])) {
-                return 'End' . $variant; // PascalCase -> EndPascalCase
+                return 'End'.$variant; // PascalCase -> EndPascalCase
             } elseif (str_contains($variant, '_')) {
-                return 'end_' . $variant; // snake_case -> end_snake_case
+                return 'end_'.$variant; // snake_case -> end_snake_case
             } elseif (ctype_lower($variant)) {
-                return 'end' . $variant; // all lowercase -> endlowercase
+                return 'end'.$variant; // all lowercase -> endlowercase
             } else {
-                return 'end' . ucfirst($variant); // camelCase -> endCamelCase
+                return 'end'.ucfirst($variant); // camelCase -> endCamelCase
             }
         }, $variants);
     }

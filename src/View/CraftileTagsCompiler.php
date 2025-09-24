@@ -3,7 +3,6 @@
 namespace Craftile\Laravel\View;
 
 use Craftile\Laravel\Support\DirectiveVariants;
-use Craftile\Laravel\View\NodeTransformerRegistry;
 use Craftile\Laravel\View\NodeTransformers\Concerns\HandlesErrors;
 use Illuminate\View\Compilers\ComponentTagCompiler;
 use Stillat\BladeParser\Document\Document;
@@ -44,7 +43,7 @@ class CraftileTagsCompiler extends ComponentTagCompiler
         );
 
         // Parse template and resolve structures
-        $parser = new DocumentParser();
+        $parser = new DocumentParser;
         $parser->setDirectiveNames($allDirectives);
         $parser->registerCustomComponentTags([$namespace]);
         $parser->parse($template);
@@ -60,10 +59,8 @@ class CraftileTagsCompiler extends ComponentTagCompiler
             return $transformerRegistry->transform($node, $this->document, $this);
         }, $nodes);
 
-        $newTemplate = implode('', array_map(fn($node) => $node->toString(), $nodes));
+        $newTemplate = implode('', array_map(fn ($node) => $node->toString(), $nodes));
 
         return $newTemplate;
     }
-
-
 }

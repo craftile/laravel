@@ -11,7 +11,7 @@ trait HandlesComponentAttributes
      */
     protected function extractComponentAttributeValue(ComponentNode $tag, string $attributeName): string
     {
-        $attribute = collect($tag->parameters)->firstWhere(fn($param) => $param->materializedName === $attributeName);
+        $attribute = collect($tag->parameters)->firstWhere(fn ($param) => $param->materializedName === $attributeName);
 
         if (! $attribute) {
             $this->throwError("<craftile:block> requires {$attributeName} attribute", $tag);
@@ -45,7 +45,7 @@ trait HandlesComponentAttributes
             );
         })->join(',');
 
-        return '[' . $properties . ']';
+        return '['.$properties.']';
     }
 
     /**

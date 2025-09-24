@@ -160,6 +160,4 @@ class CraftileContentTransformer implements NodeTransformerInterface
 
         return $this->createLiteralNode($compiled);
     }
-
-
 }

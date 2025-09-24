@@ -5,24 +5,24 @@ declare(strict_types=1);
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Support\DirectiveVariants;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
 use Craftile\Laravel\View\BladeDirectives;
-use Craftile\Laravel\View\JsonViewCompiler;
-use Illuminate\View\Engines\CompilerEngine;
 use Craftile\Laravel\View\BlockCacheManager;
 use Craftile\Laravel\View\CraftileTagsCompiler;
+use Craftile\Laravel\View\JsonViewCompiler;
 use Craftile\Laravel\View\NodeTransformerRegistry;
-use Craftile\Laravel\View\NodeTransformers\CraftileContentTransformer;
+use Craftile\Laravel\View\NodeTransformers\CraftileBlockDirectiveTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileBlockTagTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileChildrenTagTransformer;
-use Craftile\Laravel\View\NodeTransformers\CraftileBlockDirectiveTransformer;
+use Craftile\Laravel\View\NodeTransformers\CraftileContentTransformer;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Engines\CompilerEngine;
 
 class CraftileServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/craftile.php', 'craftile');
+        $this->mergeConfigFrom(__DIR__.'/../config/craftile.php', 'craftile');
 
         $this->app->singleton('craftile', Craftile::class);
         $this->app->singleton(BlockSchemaRegistry::class);
@@ -38,7 +38,7 @@ class CraftileServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'craftile');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'craftile');
 
         $this->bootBladeExtensions();
     }
@@ -46,7 +46,7 @@ class CraftileServiceProvider extends ServiceProvider
     protected function registerBladeNodeTransformers()
     {
         $this->app->singleton(NodeTransformerRegistry::class, function ($app) {
-            $registry = new NodeTransformerRegistry();
+            $registry = new NodeTransformerRegistry;
 
             $registry->register(new CraftileBlockTagTransformer);
             $registry->register(new CraftileBlockDirectiveTransformer);

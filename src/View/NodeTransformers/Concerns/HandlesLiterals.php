@@ -11,7 +11,7 @@ trait HandlesLiterals
      */
     protected function createLiteralNode(string $content): LiteralNode
     {
-        $newNode = new LiteralNode();
+        $newNode = new LiteralNode;
         $newNode->setContent($content);
 
         return $newNode;

@@ -2,7 +2,6 @@
 
 namespace Craftile\Laravel\View\NodeTransformers\Concerns;
 
-use Craftile\Laravel\Contracts\ComponentCompilerAwareInterface;
 use Craftile\Laravel\View\BlockCompilerRegistry;
 use Illuminate\View\Compilers\ComponentTagCompiler;
 use Stillat\BladeParser\Document\Document;
@@ -35,15 +34,15 @@ trait HandlesCraftileBlocks
         $schema = craftile()->getBlockSchema($type);
 
         if (! $schema) {
-            $this->throwError('No block of type ' . $type . ' is registered', $node);
+            $this->throwError('No block of type '.$type.' is registered', $node);
         }
 
         // Check if we're inside a loop for the repeated flag
         $isInLoop = $this->isNodeInsideLoop($node, $document);
 
         $hash = hash('xxh128', $id);
-        $idVar = '$__blockId' . $hash;
-        $blockDataVar = '$__blockData' . $hash;
+        $idVar = '$__blockId'.$hash;
+        $blockDataVar = '$__blockData'.$hash;
 
         $compiler = app(BlockCompilerRegistry::class)->findCompiler($schema);
 
@@ -71,7 +70,7 @@ trait HandlesCraftileBlocks
             craftile()->startBlock({$idVar}, $blockDataVar);
         } ?>
 
-        {$compiler->compile($type,$hash, '$childrenClosure',$propertiesExpr)}
+        {$compiler->compile($type, $hash, '$childrenClosure', $propertiesExpr)}
 
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock({$idVar});

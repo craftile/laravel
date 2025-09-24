@@ -12,7 +12,7 @@ use Stillat\BladeParser\Document\Document;
 use Stillat\BladeParser\Nodes\AbstractNode;
 use Stillat\BladeParser\Nodes\DirectiveNode;
 
-class CraftileBlockDirectiveTransformer implements NodeTransformerInterface, ComponentCompilerAwareInterface
+class CraftileBlockDirectiveTransformer implements ComponentCompilerAwareInterface, NodeTransformerInterface
 {
     use HandlesCraftileBlocks, HandlesErrors, HandlesLiterals;
 
@@ -67,5 +67,4 @@ class CraftileBlockDirectiveTransformer implements NodeTransformerInterface, Com
 
         return $this->createLiteralNode($compiled);
     }
-
 }
