@@ -45,8 +45,15 @@ class CraftileServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'craftile');
 
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/craftile.php' => config_path('craftile.php'),
+            ], 'craftile-config');
+        }
+
         $this->bootBladeExtensions();
         $this->bootRegisterBladeComponentBlocks();
+        $this->bootAutoDiscovery();
     }
 
     protected function registerBlockCompilerRegistry()
@@ -143,5 +150,26 @@ class CraftileServiceProvider extends ServiceProvider
                 Blade::component($componentName, $event->schema->class);
             }
         });
+    }
+
+    protected function bootAutoDiscovery()
+    {
+        if (! config('craftile.discovery.enabled', true)) {
+            return;
+        }
+
+        $discovery = $this->app->make(BlockDiscovery::class);
+        $paths = config('craftile.discovery.paths', []);
+
+        foreach ($paths as $namespace => $path) {
+            if (is_numeric($namespace)) {
+                // If no namespace provided
+                $namespace = 'App\\Blocks';
+            }
+
+            if (is_dir($path)) {
+                $discovery->scan($namespace, $path);
+            }
+        }
     }
 }
