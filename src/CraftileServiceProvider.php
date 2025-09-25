@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Craftile\Laravel;
 
+use Craftile\Laravel\Events\BlockSchemaRegistered;
 use Craftile\Laravel\Support\DirectiveVariants;
 use Craftile\Laravel\View\BladeDirectives;
 use Craftile\Laravel\View\BlockCacheManager;
+use Craftile\Laravel\View\BlockCompilerRegistry;
+use Craftile\Laravel\View\Compilers\BladeComponentBlockCompiler;
 use Craftile\Laravel\View\CraftileTagsCompiler;
 use Craftile\Laravel\View\JsonViewCompiler;
 use Craftile\Laravel\View\NodeTransformerRegistry;
@@ -15,6 +18,7 @@ use Craftile\Laravel\View\NodeTransformers\CraftileBlockTagTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileChildrenTagTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileContentTransformer;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Engines\CompilerEngine;
 
@@ -32,6 +36,7 @@ class CraftileServiceProvider extends ServiceProvider
         $this->app->singleton(BlockDatastore::class);
         $this->app->singleton(PreviewDataCollector::class);
 
+        $this->registerBlockCompilerRegistry();
         $this->registerBladeNodeTransformers();
         $this->registerJsonViewCompiler();
     }
@@ -41,6 +46,18 @@ class CraftileServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'craftile');
 
         $this->bootBladeExtensions();
+        $this->bootRegisterBladeComponentBlocks();
+    }
+
+    protected function registerBlockCompilerRegistry()
+    {
+        $this->app->singleton(BlockCompilerRegistry::class, function ($app) {
+            $registry = new BlockCompilerRegistry;
+
+            $registry->register(new BladeComponentBlockCompiler);
+
+            return $registry;
+        });
     }
 
     protected function registerBladeNodeTransformers()
@@ -116,5 +133,15 @@ class CraftileServiceProvider extends ServiceProvider
                 }
             }
         }
+    }
+
+    protected function bootRegisterBladeComponentBlocks()
+    {
+        Event::listen(BlockSchemaRegistered::class, function (BlockSchemaRegistered $event) {
+            if ($event->schema->class && is_subclass_of($event->schema->class, \Illuminate\View\Component::class)) {
+                $componentName = 'craftile-'.$event->schema->slug;
+                Blade::component($componentName, $event->schema->class);
+            }
+        });
     }
 }

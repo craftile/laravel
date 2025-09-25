@@ -40,14 +40,12 @@ return [
     | Component Configuration
     |--------------------------------------------------------------------------
     |
-    | Configure component namespace and prefix for auto-registered components.
+    | Configure custom component namespace
     |
     | 'namespace' - Changes <craftile:block/> to <custom:block/>
-    | 'prefix' - Changes craftile-text-block to custom-text-block
     |
     */
     'components' => [
         'namespace' => 'craftile',
-        'prefix' => 'craftile-',
     ],
 ];
