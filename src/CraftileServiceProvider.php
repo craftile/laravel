@@ -51,9 +51,12 @@ class CraftileServiceProvider extends ServiceProvider
             ], 'craftile-config');
         }
 
-        $this->bootBladeExtensions();
         $this->bootRegisterBladeComponentBlocks();
         $this->bootAutoDiscovery();
+
+        $this->app->booted(function () {
+            $this->bootBladeExtensions();
+        });
     }
 
     protected function registerBlockCompilerRegistry()
