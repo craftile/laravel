@@ -52,7 +52,7 @@ class PreviewScriptMiddleware
 
         $scripts = $this->buildPreviewScripts($pageData);
 
-        $content = str_replace('</body>', $scripts . '</body>', $content);
+        $content = str_replace('</body>', $scripts.'</body>', $content);
         $response->setContent($content);
     }
 
