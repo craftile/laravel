@@ -114,11 +114,12 @@ class CraftileServiceProvider extends ServiceProvider
             return $resolver;
         });
 
-        // Register view extensions
-        $extensions = config('craftile.view_compiler.extensions', ['json', 'yml', 'yaml']);
-        foreach ($extensions as $extension) {
-            $this->app['view']->addExtension($extension, 'jsonview');
-        }
+        $this->app->afterResolving(\Illuminate\View\Factory::class, function ($view) {
+            $extensions = ['json', 'yml', 'yaml'];
+            foreach ($extensions as $extension) {
+                $view->addExtension($extension, 'jsonview');
+            }
+        });
     }
 
     protected function bootBladeExtensions()
