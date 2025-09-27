@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PreviewScriptMiddleware
 {
-    private PreviewDataCollector $previewCollector;
+    protected PreviewDataCollector $previewCollector;
 
     public function __construct(PreviewDataCollector $previewCollector)
     {
@@ -52,7 +52,7 @@ class PreviewScriptMiddleware
 
         $scripts = $this->buildPreviewScripts($pageData);
 
-        $content = str_replace('</body>', $scripts.'</body>', $content);
+        $content = str_replace('</body>', $scripts . '</body>', $content);
         $response->setContent($content);
     }
 
