@@ -51,7 +51,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
             return;
         }
 
-        $compiled = $this->compileTemplate($path);
+        $compiled = $this->compileJsonFile($path);
 
         $compiled = $this->appendFilePath($compiled, $path);
 
@@ -62,57 +62,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         $this->files->put($compiledPath, $compiled);
     }
 
-    /**
-     * Compile template data directly for testing purposes.
-     */
-    public function compileTemplateData(array $templateData): string
-    {
-        try {
-            $template = $this->normalizeTemplate($templateData);
-
-            if (empty($template['regions'])) {
-                return "<?php // Empty template ?>\n";
-            }
-
-            $staticBlocksChildren = $this->collectStaticBlockChildren($template, '');
-            $staticBlocksMapCode = $this->generateStaticBlocksMapCode($staticBlocksChildren);
-
-            $regionsCodes = [];
-            foreach ($template['regions'] as $region) {
-                $regionName = $region['name'] ?? 'unnamed';
-
-                $blocks = '';
-                foreach ($region['blocks'] as $blockId) {
-                    if (! isset($template['blocks'][$blockId])) {
-                        throw new JsonViewException("Block '{$blockId}' referenced in template but not defined in blocks section", '');
-                    }
-                    $blocks .= $this->compileBlockSelectively($template['blocks'][$blockId], $template, '');
-                }
-
-                $regionCode = <<<PHP
-                <?php if (craftile()->inPreview()) {
-                    craftile()->startRegion("{$regionName}");
-                    echo '<!--BEGIN region: {$regionName}-->';
-                } ?>
-                {$blocks}
-                <?php if (craftile()->inPreview()) {
-                    echo '<!--END region: {$regionName}-->';
-                    craftile()->endRegion("{$regionName}");
-                } ?>
-                PHP;
-
-                $regionsCodes[] = $regionCode;
-            }
-            $regionsCode = implode('', $regionsCodes);
-
-            // Combine static blocks map with compiled regions
-            return $staticBlocksMapCode."\n".$regionsCode;
-        } catch (Throwable $e) {
-            throw new JsonViewException("Template compilation failed: {$e->getMessage()}", '', 0, $e);
-        }
-    }
-
-    protected function compileTemplate(string $path): string
+    public function compileJsonFile(string $path): string
     {
         try {
             $templateContent = $this->files->get($path);
@@ -126,54 +76,62 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         }
 
         try {
-            $template = $this->normalizeTemplate($template);
-
-            if (empty($template['regions'])) {
-                return "<?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile(\"$path\"); ?>\n";
-            }
-
-            $staticBlocksChildren = $this->collectStaticBlockChildren($template, $path);
-            $staticBlocksMapCode = $this->generateStaticBlocksMapCode($staticBlocksChildren);
-
-            $regionsCodes = [];
-            foreach ($template['regions'] as $region) {
-                $regionName = $region['name'] ?? 'unnamed';
-
-                $blocks = '';
-                foreach ($region['blocks'] as $blockId) {
-                    if (! isset($template['blocks'][$blockId])) {
-                        throw new JsonViewException("Block '{$blockId}' referenced in template but not defined in blocks section", $path);
-                    }
-                    $blocks .= $this->compileBlockSelectively($template['blocks'][$blockId], $template, $path);
-                }
-
-                $regionCode = <<<PHP
-                <?php if (craftile()->inPreview()) {
-                    craftile()->startRegion("{$regionName}");
-                    echo '<!--BEGIN region: {$regionName}-->';
-                } ?>
-                {$blocks}
-                <?php if (craftile()->inPreview()) {
-                    echo '<!--END region: {$regionName}-->';
-                    craftile()->endRegion("{$regionName}");
-                } ?>
-                PHP;
-
-                $regionsCodes[] = $regionCode;
-            }
-            $regionsCode = implode('', $regionsCodes);
+            $compiledTemplate = $this->compileTemplate($template, $path);
 
             return <<<PHP
             <?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile(\"$path\"); ?>
             <?php \\Craftile\\Laravel\\Events\\JsonViewLoaded::dispatch(\"$path\"); ?>
-            $staticBlocksMapCode
-            $regionsCode
+            $compiledTemplate
             PHP;
         } catch (JsonViewException $e) {
             throw $e;
         } catch (Throwable $e) {
             throw new JsonViewException("Template compilation failed: {$path}. {$e->getMessage()}", $path, 0, $e);
         }
+    }
+
+    /**
+     * Compile template data into PHP code.
+     */
+    public function compileTemplate(array $templateData, string $path = ''): string
+    {
+        $template = $this->normalizeTemplate($templateData);
+
+        if (empty($template['regions'])) {
+            return "<?php // Empty template ?>\n";
+        }
+        $staticBlocksChildren = $this->collectStaticBlockChildren($template, $path);
+        $staticBlocksMapCode = $this->generateStaticBlocksMapCode($staticBlocksChildren);
+
+        $regionsCodes = [];
+        foreach ($template['regions'] as $region) {
+            $regionName = $region['name'] ?? 'unnamed';
+
+            $blocks = '';
+            foreach ($region['blocks'] as $blockId) {
+                if (! isset($template['blocks'][$blockId])) {
+                    throw new JsonViewException("Block '{$blockId}' referenced in template but not defined in blocks section", $path);
+                }
+                $blocks .= $this->compileBlockSelectively($template['blocks'][$blockId], $template, $path);
+            }
+
+            $regionCode = <<<PHP
+            <?php if (craftile()->inPreview()) {
+                craftile()->startRegion("{$regionName}");
+                echo '<!--BEGIN region: {$regionName}-->';
+            } ?>
+            {$blocks}
+            <?php if (craftile()->inPreview()) {
+                echo '<!--END region: {$regionName}-->';
+                craftile()->endRegion("{$regionName}");
+            } ?>
+            PHP;
+
+            $regionsCodes[] = $regionCode;
+        }
+        $regionsCode = implode('', $regionsCodes);
+
+        return $staticBlocksMapCode."\n".$regionsCode;
     }
 
     /**
