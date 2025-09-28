@@ -163,7 +163,12 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
             }
             $regionsCode = implode('', $regionsCodes);
 
-            return "<?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile(\"$path\"); ?>\n".$staticBlocksMapCode."\n".$regionsCode;
+            return <<<PHP
+            <?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile(\"$path\"); ?>
+            <?php \\Craftile\\Laravel\\Events\\JsonViewLoaded::dispatch(\"$path\"); ?>
+            $staticBlocksMapCode
+            $regionsCode
+            PHP;
         } catch (JsonViewException $e) {
             throw $e;
         } catch (Throwable $e) {
