@@ -31,6 +31,10 @@ class CraftileTagsCompiler extends ComponentTagCompiler
         $blockDirective = $directives['craftileBlock'] ?? 'craftileBlock';
         $allDirectives = array_merge($allDirectives, DirectiveVariants::generate($blockDirective));
 
+        // Region directive variants
+        $regionDirective = $directives['craftileRegion'] ?? 'craftileRegion';
+        $allDirectives = array_merge($allDirectives, DirectiveVariants::generate($regionDirective));
+
         // Content directive variants
         $contentDirective = $directives['craftileContent'] ?? 'craftileContent';
         $layoutContentDirective = $directives['craftileLayoutContent'] ?? 'craftileLayoutContent';
