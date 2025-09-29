@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static BlockSchema|null getBlockSchema(string $type)
  * @method static void registerPropertyTransformer(string $type, PropertyTransformerInterface|callable $transformer)
  * @method static string generateChildId(string $parentId, string $childLocalId)
+ * @method static void resolveRegionViewUsing(callable $resolver)
+ * @method static string resolveRegionView(string $regionName)
  *
  * @see \Craftile\Laravel\Craftile
  */

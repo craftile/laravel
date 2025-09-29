@@ -11,6 +11,8 @@ class Craftile
 
     protected ?bool $previewModeCache = null;
 
+    protected $regionViewResolver = null;
+
     public function __construct(
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
@@ -142,5 +144,27 @@ class Craftile
         $contextHash = substr(hash('sha256', $parentId.'.'.$childLocalId), 0, 8);
 
         return "{$childLocalId}_{$contextHash}";
+    }
+
+    /**
+     * Register a custom region view resolver.
+     */
+    public function resolveRegionViewUsing(callable $resolver): void
+    {
+        $this->regionViewResolver = $resolver;
+    }
+
+    /**
+     * Resolve a region view name.
+     */
+    public function resolveRegionView(string $regionName): string
+    {
+        if ($this->regionViewResolver) {
+            return call_user_func($this->regionViewResolver, $regionName);
+        }
+
+        $prefix = config('craftile.region_view_prefix', 'regions');
+
+        return "{$prefix}.{$regionName}";
     }
 }

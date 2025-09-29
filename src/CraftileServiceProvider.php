@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\BlockSchemaRegistered;
-use Craftile\Laravel\Support\DirectiveVariants;
 use Craftile\Laravel\View\BladeDirectives;
 use Craftile\Laravel\View\BlockCacheManager;
 use Craftile\Laravel\View\BlockCompilerRegistry;
@@ -17,6 +16,7 @@ use Craftile\Laravel\View\NodeTransformers\CraftileBlockDirectiveTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileBlockTagTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileChildrenTagTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileContentTransformer;
+use Craftile\Laravel\View\NodeTransformers\CraftileRegionDirectiveTransformer;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -61,7 +61,7 @@ class CraftileServiceProvider extends ServiceProvider
 
     protected function registerBlockCompilerRegistry()
     {
-        $this->app->singleton(BlockCompilerRegistry::class, function ($app) {
+        $this->app->singleton(BlockCompilerRegistry::class, function () {
             $registry = new BlockCompilerRegistry;
 
             $registry->register(new BladeComponentBlockCompiler);
@@ -72,13 +72,14 @@ class CraftileServiceProvider extends ServiceProvider
 
     protected function registerBladeNodeTransformers()
     {
-        $this->app->singleton(NodeTransformerRegistry::class, function ($app) {
+        $this->app->singleton(NodeTransformerRegistry::class, function () {
             $registry = new NodeTransformerRegistry;
 
             $registry->register(new CraftileBlockTagTransformer);
             $registry->register(new CraftileBlockDirectiveTransformer);
             $registry->register(new CraftileChildrenTagTransformer);
             $registry->register(new CraftileContentTransformer);
+            $registry->register(new CraftileRegionDirectiveTransformer);
 
             return $registry;
         });
@@ -128,22 +129,6 @@ class CraftileServiceProvider extends ServiceProvider
 
         // Register Blade precompiler for craftile tags
         Blade::precompiler(app(CraftileTagsCompiler::class));
-
-        $directives = config('craftile.directives', []);
-        $coreDirectives = [
-            'craftileRegion' => [BladeDirectives::class, 'region'],
-        ];
-
-        foreach ($coreDirectives as $original => $handler) {
-            $customName = $directives[$original] ?? $original;
-
-            // Register all case variants for flexibility
-            foreach (DirectiveVariants::generate($customName) as $variant) {
-                if ($variant !== $customName) {
-                    Blade::directive($variant, $handler);
-                }
-            }
-        }
     }
 
     protected function bootRegisterBladeComponentBlocks()
