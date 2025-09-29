@@ -49,8 +49,10 @@ class CraftileRegionDirectiveTransformer implements NodeTransformerInterface
 
         $regionNameExpr = $args[0];
 
-        // Transform to @includeIf directive
-        $compiled = "@includeIf(craftile()->resolveRegionView({$regionNameExpr}))";
+        // Transform to use temp variable and Laravel's @includeIf
+        $compiled = "<?php \$__regionView = craftile()->resolveRegionView({$regionNameExpr}); ?>".
+                   '@includeIf($__regionView)'.
+                   '<?php unset($__regionView); ?>';
 
         return $this->createLiteralNode($compiled);
     }
