@@ -14,19 +14,22 @@ class BlockCacheManager
     }
 
     /**
-     * Generate content hash for a block using the entire block data.
+     * Generate cache key for a block including block ID and content hash.
      */
-    public function generateHash(array $blockData): string
+    public function getCacheKey(array $blockData): string
     {
-        return hash('xxh128', json_encode($blockData, JSON_UNESCAPED_SLASHES));
+        $blockId = $blockData['id'] ?? 'unknown';
+        $contentHash = hash('xxh128', json_encode($blockData, JSON_UNESCAPED_SLASHES));
+
+        return "{$blockId}-{$contentHash}";
     }
 
     /**
-     * Read cached compiled block content by hash.
+     * Read cached compiled block content by cache key.
      */
-    public function get(string $hash): ?string
+    public function get(string $cacheKey): ?string
     {
-        $cacheFile = $this->getCacheFilePath($hash);
+        $cacheFile = $this->getCacheFilePath($cacheKey);
 
         if ($this->files->exists($cacheFile)) {
             return $this->files->get($cacheFile);
@@ -36,11 +39,11 @@ class BlockCacheManager
     }
 
     /**
-     * Write compiled block content to cache by hash.
+     * Write compiled block content to cache by cache key.
      */
-    public function put(string $hash, string $content): bool
+    public function put(string $cacheKey, string $content): bool
     {
-        $cacheFile = $this->getCacheFilePath($hash);
+        $cacheFile = $this->getCacheFilePath($cacheKey);
 
         $this->files->ensureDirectoryExists(dirname($cacheFile));
 
@@ -48,21 +51,21 @@ class BlockCacheManager
     }
 
     /**
-     * Check if cache exists for a block with specific hash.
+     * Check if cache exists for a block with specific cache key.
      */
-    public function exists(string $hash): bool
+    public function exists(string $cacheKey): bool
     {
-        $cacheFile = $this->getCacheFilePath($hash);
+        $cacheFile = $this->getCacheFilePath($cacheKey);
 
         return $this->files->exists($cacheFile);
     }
 
     /**
-     * Delete cache file for a specific block by hash.
+     * Delete cache file for a specific block by cache key.
      */
-    public function delete(string $hash): bool
+    public function delete(string $cacheKey): bool
     {
-        $cacheFile = $this->getCacheFilePath($hash);
+        $cacheFile = $this->getCacheFilePath($cacheKey);
 
         if ($this->files->exists($cacheFile)) {
             return $this->files->delete($cacheFile);
@@ -72,13 +75,36 @@ class BlockCacheManager
     }
 
     /**
-     * Get the cache file path for a given hash.
+     * Delete all cache files for a specific block ID.
      */
-    private function getCacheFilePath(string $hash): string
+    public function flushBlock(string $blockId): bool
+    {
+        $basePath = config('view.compiled');
+        $pattern = "{$basePath}/craftile-{$blockId}-*.php";
+
+        $files = glob($pattern);
+        if (! $files) {
+            return true;
+        }
+
+        $success = true;
+        foreach ($files as $file) {
+            if (! $this->files->delete($file)) {
+                $success = false;
+            }
+        }
+
+        return $success;
+    }
+
+    /**
+     * Get the cache file path for a given cache key.
+     */
+    private function getCacheFilePath(string $cacheKey): string
     {
         $basePath = config('view.compiled');
 
-        return "{$basePath}/craftile-{$hash}.php";
+        return "{$basePath}/craftile-{$cacheKey}.php";
     }
 
     /**

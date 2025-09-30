@@ -146,10 +146,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         $blocksToInvalidate = $this->findBlocksAndAncestors($changedBlocks, $template);
 
         foreach ($blocksToInvalidate as $blockId) {
-            if (isset($template['blocks'][$blockId])) {
-                $blockHash = $this->cacheManager->generateHash($template['blocks'][$blockId]);
-                $this->cacheManager->delete($blockHash);
-            }
+            // Flush all cache versions for this block (solves rollback issue)
+            $this->cacheManager->flushBlock($blockId);
         }
     }
 
@@ -161,8 +159,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         $changedBlocks = [];
 
         foreach ($template['blocks'] as $blockData) {
-            $blockHash = $this->cacheManager->generateHash($blockData);
-            if (! $this->cacheManager->exists($blockHash)) {
+            $cacheKey = $this->cacheManager->getCacheKey($blockData);
+            if (! $this->cacheManager->exists($cacheKey)) {
                 $changedBlocks[] = $blockData['id'];
             }
         }
@@ -263,17 +261,17 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
      */
     protected function compileBlockSelectively($blockData, $template, $path): string
     {
-        $blockHash = $this->cacheManager->generateHash($blockData);
+        $cacheKey = $this->cacheManager->getCacheKey($blockData);
 
-        if ($this->cacheManager->exists($blockHash)) {
-            return $this->cacheManager->get($blockHash);
+        if ($this->cacheManager->exists($cacheKey)) {
+            return $this->cacheManager->get($cacheKey);
         }
 
         $bladeTemplate = $this->compileBlock($blockData, $template, $path);
 
         $fullyCompiledBlock = $this->blade->compileString($bladeTemplate);
 
-        $this->cacheManager->put($blockHash, $fullyCompiledBlock);
+        $this->cacheManager->put($cacheKey, $fullyCompiledBlock);
 
         return $fullyCompiledBlock;
     }
