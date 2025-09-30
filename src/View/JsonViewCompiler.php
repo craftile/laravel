@@ -284,6 +284,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         return <<<PHP
         <?php $blockDataVar = \\Craftile\\Laravel\\Facades\\BlockDatastore::getBlock("{$blockData['id']}"); ?>
 
+        <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
+
         <?php if (craftile()->inPreview()) {
             craftile()->startBlock("{$blockData['id']}", $blockDataVar);
         } ?>
@@ -294,6 +296,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock("{$blockData['id']}");
         } ?>
+
+        <?php endif; ?>
 
         <?php unset($blockDataVar); ?>
         PHP;

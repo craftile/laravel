@@ -13,6 +13,8 @@ class Craftile
 
     protected $regionViewResolver = null;
 
+    protected $renderBlockChecker = null;
+
     public function __construct(
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
@@ -35,6 +37,14 @@ class Craftile
     {
         $this->previewDetector = $detector;
         $this->previewModeCache = null;
+    }
+
+    /**
+     * Register a custom block render checker.
+     */
+    public function checkIfBlockCanRenderUsing(callable $checker): void
+    {
+        $this->renderBlockChecker = $checker;
     }
 
     /**
@@ -86,6 +96,18 @@ class Craftile
     public function endBlock(string $blockId): void
     {
         $this->previewDataCollector->endBlock($blockId);
+    }
+
+    /**
+     * Check if a block should be rendered.
+     */
+    public function shouldRenderBlock(BlockData $blockData): bool
+    {
+        if ($this->renderBlockChecker) {
+            return call_user_func($this->renderBlockChecker, $blockData);
+        }
+
+        return ! $blockData->disabled;
     }
 
     /**
