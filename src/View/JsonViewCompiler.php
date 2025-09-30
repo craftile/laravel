@@ -100,6 +100,9 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         if (empty($template['regions'])) {
             return "<?php // Empty template ?>\n";
         }
+
+        $this->invalidateStaleBlockCaches($template);
+
         $staticBlocksChildren = $this->collectStaticBlockChildren($template, $path);
         $staticBlocksMapCode = $this->generateStaticBlocksMapCode($staticBlocksChildren);
 
@@ -132,6 +135,62 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         $regionsCode = implode('', $regionsCodes);
 
         return $staticBlocksMapCode."\n".$regionsCode;
+    }
+
+    /**
+     * Invalidate caches for blocks that have changed and all their ancestors.
+     */
+    protected function invalidateStaleBlockCaches(array $template): void
+    {
+        $changedBlocks = $this->findChangedBlocks($template);
+        $blocksToInvalidate = $this->findBlocksAndAncestors($changedBlocks, $template);
+
+        foreach ($blocksToInvalidate as $blockId) {
+            if (isset($template['blocks'][$blockId])) {
+                $blockHash = $this->cacheManager->generateHash($template['blocks'][$blockId]);
+                $this->cacheManager->delete($blockHash);
+            }
+        }
+    }
+
+    /**
+     * Find all blocks that have changed (cache miss).
+     */
+    protected function findChangedBlocks(array $template): array
+    {
+        $changedBlocks = [];
+
+        foreach ($template['blocks'] as $blockData) {
+            $blockHash = $this->cacheManager->generateHash($blockData);
+            if (! $this->cacheManager->exists($blockHash)) {
+                $changedBlocks[] = $blockData['id'];
+            }
+        }
+
+        return $changedBlocks;
+    }
+
+    /**
+     * Find all blocks and their ancestors that need recompilation.
+     */
+    protected function findBlocksAndAncestors(array $changedBlocks, array $template): array
+    {
+        $blocksToInvalidate = [];
+
+        foreach ($changedBlocks as $blockId) {
+            // Add the changed block itself
+            $blocksToInvalidate[] = $blockId;
+
+            // Follow parent chain to add all ancestors
+            $currentBlockId = $blockId;
+            while (isset($template['blocks'][$currentBlockId]['parentId']) && $template['blocks'][$currentBlockId]['parentId']) {
+                $parentId = $template['blocks'][$currentBlockId]['parentId'];
+                $blocksToInvalidate[] = $parentId;
+                $currentBlockId = $parentId;
+            }
+        }
+
+        return array_unique($blocksToInvalidate);
     }
 
     /**
