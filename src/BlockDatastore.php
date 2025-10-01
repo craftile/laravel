@@ -4,6 +4,7 @@ namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\JsonViewLoaded;
 use Craftile\Laravel\Facades\Craftile;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Yaml\Yaml;
 
 class BlockDatastore
@@ -98,7 +99,8 @@ class BlockDatastore
     }
 
     /**
-     * Get all blocks array from the given JSON file (with in-memory caching).
+     * Get all blocks array from the given JSON file.
+     * Uses in-memory caching in preview mode, Laravel cache otherwise.
      */
     public function getBlocksArray(string $sourceFilePath): array
     {
@@ -106,7 +108,20 @@ class BlockDatastore
             return self::$parsedFiles[$sourceFilePath];
         }
 
-        $blocks = $this->parseBlocksFromFile($sourceFilePath);
+        $blocks = null;
+
+        // In preview mode, use only in-memory caching
+        if (Craftile::inPreview()) {
+            $blocks = $this->parseBlocksFromFile($sourceFilePath);
+        } else {
+            // In production mode, use Laravel cache
+            $cacheKey = 'craftile_blocks_'.md5($sourceFilePath.'_'.filemtime($sourceFilePath));
+            $cacheTtl = config('craftile.cache.ttl', 3600);
+            $blocks = Cache::remember($cacheKey, $cacheTtl, function () use ($sourceFilePath) {
+                return $this->parseBlocksFromFile($sourceFilePath);
+            });
+        }
+
         self::$parsedFiles[$sourceFilePath] = $blocks;
 
         return $blocks;
