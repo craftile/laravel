@@ -34,9 +34,9 @@ class BlockData extends CoreBlockData
         return $this->childrenIds;
     }
 
-    public static function make(array $blockData, $resolveChildData = null): self
+    public static function make(array $blockData, $resolveChildData = null): static
     {
-        return new self(
+        return new static(
             id: $blockData['id'] ?? '',
             type: $blockData['type'] ?? '',
             properties: self::createPropertyBag($blockData['properties'] ?? [], $blockData['type'] ?? ''),
