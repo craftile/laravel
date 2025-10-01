@@ -4,7 +4,6 @@ namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\JsonViewLoaded;
 use Craftile\Laravel\Facades\Craftile;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Yaml\Yaml;
 
 class BlockDatastore
@@ -14,6 +13,12 @@ class BlockDatastore
      * Structure: ['blockId' => BlockData].
      */
     private static array $loadedBlocks = [];
+
+    /**
+     * In-memory cache of parsed file data
+     * Structure: ['filePath' => ['blocks' => [...]]].
+     */
+    private static array $parsedFiles = [];
 
     public function __construct(
         protected BlockFlattener $flattener
@@ -93,15 +98,18 @@ class BlockDatastore
     }
 
     /**
-     * Get all blocks array from the given JSON file (with caching).
+     * Get all blocks array from the given JSON file (with in-memory caching).
      */
     public function getBlocksArray(string $sourceFilePath): array
     {
-        $cacheKey = 'craftile_blocks_'.md5($sourceFilePath.'_'.filemtime($sourceFilePath));
+        if (isset(self::$parsedFiles[$sourceFilePath])) {
+            return self::$parsedFiles[$sourceFilePath];
+        }
 
-        return Cache::remember($cacheKey, 300, function () use ($sourceFilePath) {
-            return $this->parseBlocksFromFile($sourceFilePath);
-        });
+        $blocks = $this->parseBlocksFromFile($sourceFilePath);
+        self::$parsedFiles[$sourceFilePath] = $blocks;
+
+        return $blocks;
     }
 
     /**
@@ -145,10 +153,11 @@ class BlockDatastore
     }
 
     /**
-     * Clear all loaded blocks (useful for testing).
+     * Clear all loaded blocks and parsed files (useful for testing).
      */
     public function clear(): void
     {
         self::$loadedBlocks = [];
+        self::$parsedFiles = [];
     }
 }
