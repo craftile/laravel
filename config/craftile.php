@@ -71,4 +71,15 @@ return [
     'components' => [
         'namespace' => 'craftile',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | BlockData Class
+    |--------------------------------------------------------------------------
+    |
+    | Configure the default BlockData class used for block instances.
+    | Must extend Craftile\Laravel\BlockData.
+    |
+    */
+    'block_data_class' => \Craftile\Laravel\BlockData::class,
 ];

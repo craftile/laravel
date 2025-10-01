@@ -15,6 +15,8 @@ class Craftile
 
     protected $renderBlockChecker = null;
 
+    protected $blockDataFactory = null;
+
     public function __construct(
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
@@ -45,6 +47,14 @@ class Craftile
     public function checkIfBlockCanRenderUsing(callable $checker): void
     {
         $this->renderBlockChecker = $checker;
+    }
+
+    /**
+     * Register a custom BlockData factory.
+     */
+    public function createBlockDataUsing(callable $factory): void
+    {
+        $this->blockDataFactory = $factory;
     }
 
     /**
@@ -108,6 +118,24 @@ class Craftile
         }
 
         return ! $blockData->disabled;
+    }
+
+    /**
+     * Create a BlockData instance using factory or config.
+     */
+    public function createBlockData(array $blockData, mixed $resolveChildData = null): BlockData
+    {
+        if ($this->blockDataFactory) {
+            return call_user_func($this->blockDataFactory, $blockData, $resolveChildData);
+        }
+
+        $blockDataClass = config('craftile.block_data_class', BlockData::class);
+
+        if (! is_subclass_of($blockDataClass, BlockData::class) && $blockDataClass !== BlockData::class) {
+            throw new \InvalidArgumentException("BlockData class '{$blockDataClass}' must extend Craftile\Laravel\BlockData");
+        }
+
+        return $blockDataClass::make($blockData, $resolveChildData);
     }
 
     /**

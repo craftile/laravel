@@ -3,6 +3,7 @@
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\JsonViewLoaded;
+use Craftile\Laravel\Facades\Craftile;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Yaml\Yaml;
 
@@ -33,7 +34,7 @@ class BlockDatastore
 
         // Create BlockData for each block and store in cache
         foreach ($blocks as $blockId => $blockData) {
-            self::$loadedBlocks[$blockId] = BlockData::make(
+            self::$loadedBlocks[$blockId] = Craftile::createBlockData(
                 $blockData,
                 fn ($childId) => self::$loadedBlocks[$childId] ?? null
             );
@@ -77,7 +78,7 @@ class BlockDatastore
             }
         }
 
-        return BlockData::make(
+        return Craftile::createBlockData(
             $mergedData,
             fn ($childId) => self::$loadedBlocks[$childId] ?? null
         );
