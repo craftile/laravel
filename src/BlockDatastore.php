@@ -40,10 +40,12 @@ class BlockDatastore
 
         // Create BlockData for each block and store in cache
         foreach ($blocks as $blockId => $blockData) {
-            self::$loadedBlocks[$blockId] = Craftile::createBlockData(
+            $block = Craftile::createBlockData(
                 $blockData,
                 fn ($childId) => self::$loadedBlocks[$childId] ?? null
             );
+            $block->setSourceFile($sourceFilePath);
+            self::$loadedBlocks[$blockId] = $block;
         }
     }
 
@@ -84,10 +86,13 @@ class BlockDatastore
             }
         }
 
-        return Craftile::createBlockData(
+        $mergedBlock = Craftile::createBlockData(
             $mergedData,
             fn ($childId) => self::$loadedBlocks[$childId] ?? null
         );
+        $mergedBlock->setSourceFile($existingBlock->getSourceFile());
+
+        return $mergedBlock;
     }
 
     /**
