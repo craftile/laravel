@@ -347,6 +347,12 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
             $compiledBlock = $compiler->compile($schema, $hash, $childrenClosureCode);
 
+            // Wrap block output if schema has wrapper
+            if ($schema->wrapper) {
+                [$opening, $closing] = WrapperCompiler::compileWrapper($schema->wrapper, $blockId);
+                $compiledBlock = $opening."\n".$compiledBlock."\n".$closing;
+            }
+
             if (! empty($childrenClosureCode)) {
                 $closureVar = '$__children'.$hash;
                 $compiledBlock .= "\n<?php unset({$closureVar}); ?>";

@@ -49,6 +49,13 @@ trait HandlesCraftileBlocks
         // Mark blocks as repeated when in loops - used for editor behavior
         $repeatedExpr = $isInLoop ? 'true' : 'false';
 
+        // Determine wrapper parts if schema has wrapper
+        $wrapperOpening = '';
+        $wrapperClosing = '';
+        if ($schema->wrapper) {
+            [$wrapperOpening, $wrapperClosing] = \Craftile\Laravel\View\WrapperCompiler::compileWrapper($schema->wrapper, $id);
+        }
+
         $template = <<<PHP
         <?php
         if (isset(\$block)) {
@@ -70,7 +77,9 @@ trait HandlesCraftileBlocks
             craftile()->startBlock({$idVar}, $blockDataVar);
         } ?>
 
+        {$wrapperOpening}
         {$compiler->compile($schema, $hash, '$childrenClosure', $propertiesExpr)}
+        {$wrapperClosing}
 
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock({$idVar});
