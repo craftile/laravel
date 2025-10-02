@@ -70,7 +70,7 @@ trait HandlesCraftileBlocks
             craftile()->startBlock({$idVar}, $blockDataVar);
         } ?>
 
-        {$compiler->compile($type, $hash, '$childrenClosure', $propertiesExpr)}
+        {$compiler->compile($schema, $hash, '$childrenClosure', $propertiesExpr)}
 
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock({$idVar});

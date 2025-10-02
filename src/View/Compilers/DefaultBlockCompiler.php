@@ -12,9 +12,8 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         return true;
     }
 
-    public function compile(string $blockType, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
+    public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
     {
-        $schemaVar = '$__blockSchema'.$hash;
         $instanceVar = '$__blockInstance'.$hash;
         $blockDataVar = '$__blockData'.$hash;
         $contextVar = '$__context'.$hash;
@@ -27,8 +26,7 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         return <<<PHP
         <?php
         $childrenCode
-        $schemaVar = craftile()->getBlockSchema("{$blockType}");
-        $instanceVar = new {$schemaVar}->class;
+        $instanceVar = new \\{$schema->class};
 
         {$contextVar} = array_merge(
             array_filter(get_defined_vars(), fn(\$_, \$key) => !str_starts_with(\$key, '__') || \$key === '__staticBlocksChildren', ARRAY_FILTER_USE_BOTH),
@@ -58,7 +56,7 @@ class DefaultBlockCompiler implements BlockCompilerInterface
             echo {$viewVar};
         }
 
-        unset({$schemaVar}, {$instanceVar}, {$viewVar});
+        unset({$instanceVar}, {$viewVar});
         ?>
         PHP;
     }

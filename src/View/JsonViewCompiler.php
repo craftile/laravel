@@ -345,7 +345,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
                 }
             }
 
-            $compiledBlock = $compiler->compile($blockData['type'], $hash, $childrenClosureCode);
+            $compiledBlock = $compiler->compile($schema, $hash, $childrenClosureCode);
 
             if (! empty($childrenClosureCode)) {
                 $closureVar = '$__children'.$hash;

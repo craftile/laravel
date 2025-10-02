@@ -12,7 +12,7 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
         return $schema->class && is_subclass_of($schema->class, \Illuminate\View\Component::class);
     }
 
-    public function compile(string $blockType, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
+    public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
     {
         $blockDataVar = '$__blockData'.$hash;
         $childrenVar = '$__children'.$hash;
@@ -28,7 +28,7 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
             {$customAttributesExpr}
         );
         ?>
-        <x-craftile-{$blockType} :block="{$blockDataVar}" :context="{$contextVar}" :children="{$childrenVar}" />
+        <x-craftile-{$schema->slug} :block="{$blockDataVar}" :context="{$contextVar}" :children="{$childrenVar}" />
         <?php
         // Clean up variables to free memory
         unset({$childrenVar}, {$contextVar});
