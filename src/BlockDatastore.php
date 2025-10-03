@@ -44,7 +44,6 @@ class BlockDatastore
                 $blockData,
                 fn ($childId) => self::$loadedBlocks[$childId] ?? null
             );
-            $block->setSourceFile($sourceFilePath);
             self::$loadedBlocks[$blockId] = $block;
         }
     }
@@ -90,7 +89,6 @@ class BlockDatastore
             $mergedData,
             fn ($childId) => self::$loadedBlocks[$childId] ?? null
         );
-        $mergedBlock->setSourceFile($existingBlock->getSourceFile());
 
         return $mergedBlock;
     }
@@ -161,15 +159,44 @@ class BlockDatastore
             return [];
         }
 
-        // Check if the data contains nested block structures and flatten if needed
-        if ($this->flattener->hasNestedStructure($data)) {
-            $flattened = $this->flattener->flattenNestedStructure($data);
-            unset($flattened['_idMappings']);
+        $template = [];
 
-            return $flattened['blocks'] ?? [];
+        if ($this->flattener->hasNestedStructure($data)) {
+            $template = $this->flattener->flattenNestedStructure($data);
+            unset($template['_idMappings']);
+        } else {
+            $template = $data;
         }
 
-        return $data['blocks'] ?? [];
+        $blocks = $template['blocks'] ?? [];
+
+        $this->assignBlockIndices($blocks, $template);
+
+        return $blocks;
+    }
+
+    /**
+     * Assign indices to blocks based on their position.
+     */
+    protected function assignBlockIndices(array &$blocks, array $template): void
+    {
+        // Assign indices for blocks in regions
+        foreach ($template['regions'] ?? [] as $region) {
+            foreach ($region['blocks'] ?? [] as $index => $blockId) {
+                if (isset($blocks[$blockId])) {
+                    $blocks[$blockId]['index'] = $index;
+                }
+            }
+        }
+
+        // Assign indices for child blocks
+        foreach ($blocks as $blockId => $blockData) {
+            foreach ($blockData['children'] ?? [] as $index => $childId) {
+                if (isset($blocks[$childId])) {
+                    $blocks[$childId]['index'] = $index;
+                }
+            }
+        }
     }
 
     /**

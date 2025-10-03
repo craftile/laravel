@@ -28,10 +28,7 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         $childrenCode
         $instanceVar = new \\{$schema->class};
 
-        {$contextVar} = array_merge(
-            array_filter(get_defined_vars(), fn(\$_, \$key) => !str_starts_with(\$key, '__') || \$key === '__staticBlocksChildren', ARRAY_FILTER_USE_BOTH),
-            {$customAttributesExpr}
-        );
+        {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
 
         if (method_exists({$instanceVar}, 'setBlockData')) {
             {$instanceVar}->setBlockData({$blockDataVar});
@@ -44,9 +41,13 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         {$viewVar} = {$instanceVar}->render();
 
         if({$viewVar} instanceof \\Illuminate\\View\\View) {
+            // Merge shared data from block instance if share() method exists
+            \$__sharedData = method_exists({$instanceVar}, 'share') ? {$instanceVar}->share() : [];
+            \$__mergedContext = array_merge({$contextVar}, \$__sharedData);
+
             {$viewDataVar} = array_merge(
-                {$contextVar},
-                ['block' => {$blockDataVar}, 'children' => {$childrenVar}]
+                \$__mergedContext,
+                ['block' => {$blockDataVar}, 'children' => {$childrenVar}, '__craftileContext' => \$__mergedContext]
             );
 
             echo {$viewVar}->with({$viewDataVar})->render();

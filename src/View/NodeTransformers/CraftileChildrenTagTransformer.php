@@ -18,8 +18,8 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
         $namespace = config('craftile.components.namespace', 'craftile');
 
         return $node instanceof ComponentNode &&
-               $node->componentPrefix === $namespace &&
-               $node->tagName === 'children';
+            $node->componentPrefix === $namespace &&
+            $node->tagName === 'children';
     }
 
     public function transform(AbstractNode $node, ?Document $document): AbstractNode
@@ -29,7 +29,10 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
             $this->throwError("<{$namespace}:children> tag should not have any attributes", $node);
         }
 
-        $compiled = '<?php if(isset($children) && is_callable($children)) { echo $children(); } ?>';
+        $compiled = '<?php if(isset($children) && is_callable($children)) {
+            $__contextToPass = isset($__craftileContext) ? $__craftileContext : [];
+            echo $children($__contextToPass);
+        } ?>';
 
         return $this->createLiteralNode($compiled);
     }

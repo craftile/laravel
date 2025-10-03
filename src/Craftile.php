@@ -217,4 +217,27 @@ class Craftile
 
         return "{$prefix}.{$regionName}";
     }
+
+    /**
+     * Filter context variables for blocks.
+     *
+     * Filters out:
+     * - Variables starting with '__' (except '__staticBlocksChildren')
+     * - Laravel auto-injected variables ('app', 'errors')
+     *
+     * @param  array  $vars  The variables to filter (typically from get_defined_vars())
+     * @param  array  $customAttributes  Additional custom attributes to merge
+     * @return array Filtered context
+     */
+    public function filterContext(array $vars, array $customAttributes = []): array
+    {
+        $filtered = array_filter(
+            $vars,
+            fn ($_, $key) => (! str_starts_with($key, '__') || $key === '__staticBlocksChildren')
+                && ! in_array($key, ['app', 'errors'], true),
+            ARRAY_FILTER_USE_BOTH
+        );
+
+        return array_merge($filtered, $customAttributes);
+    }
 }

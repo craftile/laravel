@@ -9,7 +9,7 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
 {
     public function supports(BlockSchema $schema): bool
     {
-        return $schema->class && is_subclass_of($schema->class, \Illuminate\View\Component::class);
+        return is_subclass_of($schema->class, \Illuminate\View\Component::class);
     }
 
     public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
@@ -23,10 +23,7 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
         return <<<PHP
         <?php
         {$childrenCode}
-        {$contextVar} = array_merge(
-            array_filter(get_defined_vars(), fn(\$_, \$key) => !str_starts_with(\$key, '__') || \$key === '__staticBlocksChildren', ARRAY_FILTER_USE_BOTH),
-            {$customAttributesExpr}
-        );
+        {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
         ?>
         <x-craftile-{$schema->slug} :block="{$blockDataVar}" :context="{$contextVar}" :children="{$childrenVar}" />
         <?php

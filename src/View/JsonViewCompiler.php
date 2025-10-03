@@ -229,7 +229,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
             return '';
         }
 
-        return "function() use (\$__env) {
+        return "function(\$__parentScope = []) use (\$__env) {
+            extract(\$__parentScope);
             ob_start();
             ?>{$childrenCode}<?php
             \$result = ob_get_clean();
@@ -335,7 +336,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
                 }
 
                 if ($childrenCode) {
-                    $childrenClosureCode = "function() use (\$__env) {
+                    $childrenClosureCode = "function(\$__parentScope = []) use (\$__env) {
+                        extract(\$__parentScope);
                         ob_start();
                         ?>{$childrenCode}<?php
                         \$result = ob_get_clean();

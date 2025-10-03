@@ -7,29 +7,6 @@ use Craftile\Core\Data\BlockData as CoreBlockData;
 class BlockData extends CoreBlockData
 {
     /**
-     * Source file path where this block was loaded from
-     */
-    protected ?string $sourceFile = null;
-
-    /**
-     * Set the source file path for this block
-     */
-    public function setSourceFile(?string $sourceFile): self
-    {
-        $this->sourceFile = $sourceFile;
-
-        return $this;
-    }
-
-    /**
-     * Get the source file path for this block
-     */
-    public function getSourceFile(): ?string
-    {
-        return $this->sourceFile;
-    }
-
-    /**
      * Get editor attributes
      */
     public function craftileAttributes(): EditorAttributes
@@ -69,6 +46,7 @@ class BlockData extends CoreBlockData
             static: $blockData['static'] ?? false,
             repeated: $blockData['repeated'] ?? false,
             semanticId: $blockData['semanticId'] ?? null,
+            index: $blockData['index'] ?? null,
             resolveChildData: $resolveChildData,
         );
     }
