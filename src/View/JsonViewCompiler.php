@@ -200,7 +200,6 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
         foreach ($template['blocks'] as $blockId => $blockData) {
             if (($blockData['static'] ?? false) && ! empty($blockData['children'])) {
-                // Generate children closure for this static block
                 $childrenClosureCode = $this->generateChildrenClosureForStaticBlock($blockData, $template, $path);
                 if ($childrenClosureCode) {
                     $staticBlocksChildren[$blockId] = $childrenClosureCode;
@@ -285,20 +284,19 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         return <<<PHP
         <?php $blockDataVar = \\Craftile\\Laravel\\Facades\\BlockDatastore::getBlock("{$blockData['id']}"); ?>
 
-        <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
-
         <?php if (craftile()->inPreview()) {
             craftile()->startBlock("{$blockData['id']}", $blockDataVar);
         } ?>
 
+        <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
 
         {$this->generateCodeForRenderingBlock($blockData, $hash, $template, $path)}
+
+        <?php endif; ?>
 
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock("{$blockData['id']}");
         } ?>
-
-        <?php endif; ?>
 
         <?php unset($blockDataVar); ?>
         PHP;

@@ -23,6 +23,12 @@ class PreviewDataCollector
     private string $currentLayer = 'beforeContent';
 
     /**
+     * Track the actual render order of children for each parent block.
+     * Structure: ['parentId' => ['child1', 'child2', ...]]
+     */
+    private array $renderedChildren = [];
+
+    /**
      * Start tracking a region.
      */
     public function startRegion(string $regionName): void
@@ -82,6 +88,16 @@ class PreviewDataCollector
 
         $this->blocks[$blockId] = $blockData->toArray();
 
+        if ($blockData->parentId) {
+            if (! isset($this->renderedChildren[$blockData->parentId])) {
+                $this->renderedChildren[$blockData->parentId] = [];
+            }
+
+            if (! in_array($blockId, $this->renderedChildren[$blockData->parentId])) {
+                $this->renderedChildren[$blockData->parentId][] = $blockId;
+            }
+        }
+
         if ($this->currentRegion) {
             $currentRegion = $this->currentRegion;
 
@@ -106,6 +122,13 @@ class PreviewDataCollector
      */
     public function getCollectedData(): array
     {
+        // Update parent blocks with actual rendered children order
+        foreach ($this->renderedChildren as $parentId => $childrenInOrder) {
+            if (isset($this->blocks[$parentId])) {
+                $this->blocks[$parentId]['children'] = $childrenInOrder;
+            }
+        }
+
         $regionsArray = [];
 
         // Add regions in proper template order:
@@ -138,9 +161,9 @@ class PreviewDataCollector
         return [
             'blocks' => $this->blocks,
             'regions' => $regionsArray,
-            'regionsBeforeContent' => $this->regionsBeforeContent,
-            'regionsInContent' => $this->regionsInContent,
-            'regionsAfterContent' => $this->regionsAfterContent,
+            // 'regionsBeforeContent' => $this->regionsBeforeContent,
+            // 'regionsInContent' => $this->regionsInContent,
+            // 'regionsAfterContent' => $this->regionsAfterContent,
         ];
     }
 

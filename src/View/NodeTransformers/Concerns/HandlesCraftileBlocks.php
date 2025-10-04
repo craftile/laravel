@@ -64,10 +64,10 @@ trait HandlesCraftileBlocks
             {$idVar} = '{$id}';
         }
 
-        $blockDataVar = BlockDatastore::getBlock({$idVar}, ['static' => true, 'repeated' => {$repeatedExpr}]);
+        {$blockDataVar} = BlockDatastore::getBlock({$idVar}, ['static' => true, 'repeated' => {$repeatedExpr}]);
 
-        if (!$blockDataVar) {
-            $blockDataVar = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'static' => true, 'repeated' => {$repeatedExpr}]);
+        if (!{$blockDataVar}) {
+            {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'static' => true, 'repeated' => {$repeatedExpr}]);
         }
 
         // Get children closure from static blocks map if available
@@ -77,9 +77,13 @@ trait HandlesCraftileBlocks
             craftile()->startBlock({$idVar}, $blockDataVar);
         } ?>
 
+        <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
+
         {$wrapperOpening}
         {$compiler->compile($schema, $hash, '$childrenClosure', $propertiesExpr)}
         {$wrapperClosing}
+
+        <?php endif; ?>
 
         <?php if (craftile()->inPreview()) {
             craftile()->endBlock({$idVar});

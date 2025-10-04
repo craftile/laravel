@@ -21,7 +21,8 @@ class Craftile
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
         protected BlockDiscovery $blockDiscovery,
-        protected PreviewDataCollector $previewDataCollector
+        protected PreviewDataCollector $previewDataCollector,
+        protected BlockDatastore $blockDatastore
     ) {}
 
     /**
@@ -194,6 +195,26 @@ class Craftile
         $contextHash = substr(hash('sha256', $parentId.'.'.$childLocalId), 0, 8);
 
         return "{$childLocalId}_{$contextHash}";
+    }
+
+    /**
+     * Resolve static block by semanticId within parent context
+     * Used for static block template resolution after duplication.
+     */
+    public function resolveStaticBlockId(string $parentId, string $semanticId): ?string
+    {
+        $allBlocks = $this->blockDatastore->getAllBlocks();
+
+        foreach ($allBlocks as $blockId => $block) {
+            if ($block->static && $block->parentId === $parentId) {
+                $blockSemanticId = $block->semanticId ?? $block->id;
+                if ($blockSemanticId === $semanticId) {
+                    return $blockId;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

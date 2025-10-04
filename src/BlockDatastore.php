@@ -2,7 +2,6 @@
 
 namespace Craftile\Laravel;
 
-use Craftile\Laravel\Events\JsonViewLoaded;
 use Craftile\Laravel\Facades\Craftile;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Yaml\Yaml;
@@ -33,8 +32,6 @@ class BlockDatastore
         if (! file_exists($sourceFilePath)) {
             return;
         }
-
-        JsonViewLoaded::dispatch($sourceFilePath);
 
         $blocks = $this->getBlocksArray($sourceFilePath);
 
@@ -99,6 +96,14 @@ class BlockDatastore
     public function hasBlock(string $blockId): bool
     {
         return isset(self::$loadedBlocks[$blockId]);
+    }
+
+    /**
+     * Get all loaded blocks.
+     */
+    public function getAllBlocks(): array
+    {
+        return self::$loadedBlocks;
     }
 
     /**
