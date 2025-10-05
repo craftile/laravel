@@ -63,6 +63,7 @@ class BlockData extends CoreBlockData
                     // Convert Property objects to arrays and key by id
                     $schemas = collect($propertiesDefinitions)
                         ->map(fn ($prop) => is_object($prop) ? $prop->toArray() : $prop)
+                        ->filter(fn ($schema) => array_key_exists('id', $schema))
                         ->keyBy('id')
                         ->toArray();
                 }
