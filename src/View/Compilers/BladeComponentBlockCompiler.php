@@ -12,7 +12,7 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
         return is_subclass_of($schema->class, \Illuminate\View\Component::class);
     }
 
-    public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
+    public function compile(BlockSchema $schema, string $hash, string $customAttributesExpr = '[]'): string
     {
         $blockDataVar = '$__blockData'.$hash;
         $contextVar = '$__context'.$hash;

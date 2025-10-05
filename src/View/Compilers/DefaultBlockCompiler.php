@@ -12,7 +12,7 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         return true;
     }
 
-    public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
+    public function compile(BlockSchema $schema, string $hash, string $customAttributesExpr = '[]'): string
     {
         $instanceVar = '$__blockInstance'.$hash;
         $blockDataVar = '$__blockData'.$hash;
