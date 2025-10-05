@@ -15,20 +15,16 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
     public function compile(BlockSchema $schema, string $hash, string $childrenClosureCode = '', string $customAttributesExpr = '[]'): string
     {
         $blockDataVar = '$__blockData'.$hash;
-        $childrenVar = '$__children'.$hash;
-        $childrenCode = $childrenClosureCode ? "{$childrenVar} = {$childrenClosureCode};" : "{$childrenVar} = null;";
-
         $contextVar = '$__context'.$hash;
 
         return <<<PHP
         <?php
-        {$childrenCode}
         {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
         ?>
-        <x-craftile-{$schema->slug} :block="{$blockDataVar}" :context="{$contextVar}" :children="{$childrenVar}" />
+        <x-craftile-{$schema->slug} :block="{$blockDataVar}" :context="{$contextVar}" />
         <?php
         // Clean up variables to free memory
-        unset({$childrenVar}, {$contextVar});
+        unset({$contextVar});
         ?>
         PHP;
     }

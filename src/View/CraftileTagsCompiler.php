@@ -46,6 +46,9 @@ class CraftileTagsCompiler extends ComponentTagCompiler
             DirectiveVariants::generateEnd($contentDirective)
         );
 
+        // Children directive
+        $allDirectives[] = 'children';
+
         // Parse template and resolve structures
         $parser = new DocumentParser;
         $parser->setDirectiveNames($allDirectives);

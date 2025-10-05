@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\BlockSchemaRegistered;
-use Craftile\Laravel\View\BladeDirectives;
 use Craftile\Laravel\View\BlockCacheManager;
 use Craftile\Laravel\View\BlockCompilerRegistry;
 use Craftile\Laravel\View\Compilers\BladeComponentBlockCompiler;
@@ -125,8 +124,6 @@ class CraftileServiceProvider extends ServiceProvider
 
     protected function bootBladeExtensions()
     {
-        Blade::directive('children', [BladeDirectives::class, 'children']);
-
         // Register Blade precompiler for craftile tags
         Blade::precompiler(app(CraftileTagsCompiler::class));
     }

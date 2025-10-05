@@ -103,8 +103,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
         $this->invalidateStaleBlockCaches($template);
 
-        $staticBlocksChildren = $this->collectStaticBlockChildren($template, $path);
-        $staticBlocksMapCode = $this->generateStaticBlocksMapCode($staticBlocksChildren);
+        // Compile static block children to files
+        $this->compileStaticBlockChildren($template, $path);
 
         $regionsCodes = [];
         foreach ($template['regions'] as $region) {
@@ -115,7 +115,15 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
                 if (! isset($template['blocks'][$blockId])) {
                     throw new JsonViewException("Block '{$blockId}' referenced in template but not defined in blocks section", $path);
                 }
-                $blocks .= $this->compileBlockSelectively($template['blocks'][$blockId], $template, $path);
+
+                $blockData = $template['blocks'][$blockId];
+
+                // Skip static blocks - they are rendered in Blade templates via @craftileBlock
+                if ($blockData['static'] ?? false) {
+                    continue;
+                }
+
+                $blocks .= $this->compileBlockSelectively($blockData, $template, $path);
             }
 
             $regionCode = <<<PHP
@@ -132,9 +140,8 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
             $regionsCodes[] = $regionCode;
         }
-        $regionsCode = implode('', $regionsCodes);
 
-        return $staticBlocksMapCode."\n".$regionsCode;
+        return implode('', $regionsCodes);
     }
 
     /**
@@ -192,68 +199,15 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
     }
 
     /**
-     * Collect children closures for static blocks.
+     * Compile children files for static blocks.
      */
-    protected function collectStaticBlockChildren(array $template, string $path): array
+    protected function compileStaticBlockChildren(array $template, string $path): void
     {
-        $staticBlocksChildren = [];
-
-        foreach ($template['blocks'] as $blockId => $blockData) {
+        foreach ($template['blocks'] as $blockData) {
             if (($blockData['static'] ?? false) && ! empty($blockData['children'])) {
-                $childrenClosureCode = $this->generateChildrenClosureForStaticBlock($blockData, $template, $path);
-                if ($childrenClosureCode) {
-                    $staticBlocksChildren[$blockId] = $childrenClosureCode;
-                }
+                $this->compileChildrenToFile($blockData, $template, $path);
             }
         }
-
-        return $staticBlocksChildren;
-    }
-
-    /**
-     * Generate children closure code for a static block.
-     */
-    protected function generateChildrenClosureForStaticBlock(array $blockData, array $template, string $path): string
-    {
-        $childrenCode = '';
-        foreach ($blockData['children'] as $childId) {
-            if (! isset($template['blocks'][$childId])) {
-                throw new JsonViewException("Child block '{$childId}' referenced by static block '{$blockData['id']}' but not defined in blocks section", $path);
-            }
-            $childData = $template['blocks'][$childId];
-            $childrenCode .= $this->compileBlockSelectively($childData, $template, $path);
-        }
-
-        if (! $childrenCode) {
-            return '';
-        }
-
-        return "function(\$__parentScope = []) use (\$__env) {
-            extract(\$__parentScope);
-            ob_start();
-            ?>{$childrenCode}<?php
-            \$result = ob_get_clean();
-            return \$result;
-        }";
-    }
-
-    /**
-     * Generate PHP code for the static blocks children map.
-     */
-    protected function generateStaticBlocksMapCode(array $staticBlocksChildren): string
-    {
-        if (empty($staticBlocksChildren)) {
-            return '';
-        }
-
-        $mapEntries = [];
-        foreach ($staticBlocksChildren as $blockId => $closureCode) {
-            $mapEntries[] = "    '{$blockId}' => {$closureCode}";
-        }
-
-        $mapCode = implode(",\n", $mapEntries);
-
-        return "<?php\n\$__staticBlocksChildren = [\n{$mapCode}\n];\n?>";
     }
 
     /**
@@ -315,47 +269,15 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
             $compiler = $this->findBlockCompiler($schema);
 
-            // Generate closure code for children if block has them
-            $childrenClosureCode = '';
-            if (! empty($blockData['children'])) {
-                $childrenCode = '';
-                foreach ($blockData['children'] as $childId) {
-                    if (! isset($template['blocks'][$childId])) {
-                        throw new JsonViewException("Child block '{$childId}' referenced by block '{$blockId}' but not defined in blocks section", $path);
-                    }
-                    $childData = $template['blocks'][$childId];
+            // Compile children to file if block has them
+            $this->compileChildrenToFile($blockData, $template, $path);
 
-                    // Skip static children from parent's closure (they will be handled by <craftile:block/> directives)
-                    if ($childData['static'] ?? false) {
-                        continue;
-                    }
-
-                    $childrenCode .= $this->compileBlockSelectively($childData, $template, $path);
-                }
-
-                if ($childrenCode) {
-                    $childrenClosureCode = "function(\$__parentScope = []) use (\$__env) {
-                        extract(\$__parentScope);
-                        ob_start();
-                        ?>{$childrenCode}<?php
-                        \$result = ob_get_clean();
-                        // Clean up any temporary variables
-                        return \$result;
-                    }";
-                }
-            }
-
-            $compiledBlock = $compiler->compile($schema, $hash, $childrenClosureCode);
+            $compiledBlock = $compiler->compile($schema, $hash, '');
 
             // Wrap block output if schema has wrapper
             if ($schema->wrapper) {
                 [$opening, $closing] = WrapperCompiler::compileWrapper($schema->wrapper, $blockId);
                 $compiledBlock = $opening."\n".$compiledBlock."\n".$closing;
-            }
-
-            if (! empty($childrenClosureCode)) {
-                $closureVar = '$__children'.$hash;
-                $compiledBlock .= "\n<?php unset({$closureVar}); ?>";
             }
 
             return $compiledBlock;
@@ -485,5 +407,39 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         }
 
         return $filteredTokens;
+    }
+
+    /**
+     * Compile block children to a separate file and return the file path.
+     *
+     * @return string|null The file path to the compiled children file, or null if no children to compile
+     */
+    protected function compileChildrenToFile(array $blockData, array $template, string $path): ?string
+    {
+        if (empty($blockData['children'])) {
+            return null;
+        }
+
+        $childrenCode = '';
+        foreach ($blockData['children'] as $childId) {
+            if (! isset($template['blocks'][$childId])) {
+                throw new JsonViewException("Child block '{$childId}' referenced by block '{$blockData['id']}' but not defined in blocks section", $path);
+            }
+            $childData = $template['blocks'][$childId];
+
+            // Skip static children - they render via @craftileBlock in templates
+            if ($childData['static'] ?? false) {
+                continue;
+            }
+
+            $childrenCode .= $this->compileBlockSelectively($childData, $template, $path);
+        }
+
+        // If no dynamic children to compile, return null
+        if (! $childrenCode) {
+            return null;
+        }
+
+        return $this->cacheManager->writeChildrenFile($blockData['id'], $childrenCode);
     }
 }

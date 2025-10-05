@@ -19,13 +19,9 @@ class DefaultBlockCompiler implements BlockCompilerInterface
         $contextVar = '$__context'.$hash;
         $viewVar = '$__blockView'.$hash;
         $viewDataVar = '$__blockViewData'.$hash;
-        $childrenVar = '$__children'.$hash;
-
-        $childrenCode = $childrenClosureCode ? "{$childrenVar} = {$childrenClosureCode};" : "{$childrenVar} = null;";
 
         return <<<PHP
         <?php
-        $childrenCode
         $instanceVar = new \\{$schema->class};
 
         {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
@@ -47,7 +43,7 @@ class DefaultBlockCompiler implements BlockCompilerInterface
 
             {$viewDataVar} = array_merge(
                 \$__mergedContext,
-                ['block' => {$blockDataVar}, 'children' => {$childrenVar}, '__craftileContext' => \$__mergedContext]
+                ['block' => {$blockDataVar}, '__craftileContext' => \$__mergedContext]
             );
 
             echo {$viewVar}->with({$viewDataVar})->render();

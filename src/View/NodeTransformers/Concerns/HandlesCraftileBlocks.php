@@ -70,8 +70,6 @@ trait HandlesCraftileBlocks
             {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'static' => true, 'repeated' => {$repeatedExpr}]);
         }
 
-        // Get children closure from static blocks map if available
-        \$childrenClosure = (isset(\$__staticBlocksChildren) && isset(\$__staticBlocksChildren[{$idVar}])) ? \$__staticBlocksChildren[{$idVar}] : '';
         ?>
         <?php if (craftile()->inPreview()) {
             craftile()->startBlock({$idVar}, $blockDataVar);
@@ -80,7 +78,7 @@ trait HandlesCraftileBlocks
         <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
 
         {$wrapperOpening}
-        {$compiler->compile($schema, $hash, '$childrenClosure', $propertiesExpr)}
+        {$compiler->compile($schema, $hash, '', $propertiesExpr)}
         {$wrapperClosing}
 
         <?php endif; ?>

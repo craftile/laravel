@@ -94,6 +94,55 @@ class BlockCacheManager
             }
         }
 
+        // Also flush children file for this block
+        $this->flushChildrenFile($blockId);
+
+        return $success;
+    }
+
+    /**
+     * Get the compiled children file path for a block.
+     */
+    public function getChildrenFilePath(string $blockId): string
+    {
+        $basePath = config('view.compiled');
+        $hash = hash('xxh128', $blockId);
+
+        return "{$basePath}/craftile-children-{$blockId}-{$hash}.php";
+    }
+
+    /**
+     * Write compiled children code to file.
+     */
+    public function writeChildrenFile(string $blockId, string $childrenCode): string
+    {
+        $filePath = $this->getChildrenFilePath($blockId);
+
+        $this->files->put($filePath, $childrenCode);
+
+        return $filePath;
+    }
+
+    /**
+     * Delete the compiled children file for a specific block ID.
+     */
+    public function flushChildrenFile(string $blockId): bool
+    {
+        $basePath = config('view.compiled');
+        $pattern = "{$basePath}/craftile-children-{$blockId}-*.php";
+
+        $files = glob($pattern);
+        if (! $files) {
+            return true;
+        }
+
+        $success = true;
+        foreach ($files as $file) {
+            if (! $this->files->delete($file)) {
+                $success = false;
+            }
+        }
+
         return $success;
     }
 
