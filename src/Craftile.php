@@ -255,7 +255,7 @@ class Craftile
         $filtered = array_filter(
             $vars,
             fn ($_, $key) => (! str_starts_with($key, '__') || $key === '__staticBlocksChildren')
-                && ! in_array($key, ['app', 'errors'], true),
+                && ! in_array($key, ['app', 'errors', 'block', 'section'], true),
             ARRAY_FILTER_USE_BOTH
         );
 
