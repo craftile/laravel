@@ -41,6 +41,8 @@ class BlockDatastore
                 $blockData,
                 fn ($childId) => self::$loadedBlocks[$childId] ?? null
             );
+
+            $block->setSourceFile($sourceFilePath);
             self::$loadedBlocks[$blockId] = $block;
         }
     }
@@ -82,12 +84,14 @@ class BlockDatastore
             }
         }
 
-        $mergedBlock = Craftile::createBlockData(
+        $block = Craftile::createBlockData(
             $mergedData,
             fn ($childId) => self::$loadedBlocks[$childId] ?? null
         );
 
-        return $mergedBlock;
+        $block->setSourceFile($existingBlock->getSourceFile());
+
+        return $block;
     }
 
     /**
