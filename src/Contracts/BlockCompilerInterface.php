@@ -14,5 +14,5 @@ interface BlockCompilerInterface
     /**
      * Compile block data into Blade/PHP code.
      */
-    public function compile(BlockSchema $schema, string $hash, string $customAttributesExpr = ''): string;
+    public function compile(BlockSchema $schema, string $hash, string $customAttributesExpr = '[]'): string;
 }

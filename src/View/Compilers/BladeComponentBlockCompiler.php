@@ -20,6 +20,9 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
         return <<<PHP
         <?php
         {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
+
+        // Inject context into PropertyBag for dynamic source resolution
+        {$blockDataVar}->properties->setContext({$contextVar});
         ?>
         <x-craftile-{$schema->slug} :block="{$blockDataVar}" :context="{$contextVar}" />
         <?php

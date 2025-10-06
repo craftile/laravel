@@ -41,6 +41,9 @@ class DefaultBlockCompiler implements BlockCompilerInterface
             \$__sharedData = method_exists({$instanceVar}, 'share') ? {$instanceVar}->share() : [];
             \$__mergedContext = array_merge({$contextVar}, \$__sharedData);
 
+            // Inject context into PropertyBag for dynamic source resolution
+            {$blockDataVar}->properties->setContext(\$__mergedContext);
+
             {$viewDataVar} = array_merge(
                 \$__mergedContext,
                 ['block' => {$blockDataVar}, '__craftileContext' => \$__mergedContext]

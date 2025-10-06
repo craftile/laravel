@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Events\BlockSchemaRegistered;
+use Craftile\Laravel\PropertyTransformers\DynamicSourceTransformer;
 use Craftile\Laravel\View\BlockCacheManager;
 use Craftile\Laravel\View\BlockCompilerRegistry;
 use Craftile\Laravel\View\Compilers\BladeComponentBlockCompiler;
@@ -38,6 +39,7 @@ class CraftileServiceProvider extends ServiceProvider
         $this->registerBlockCompilerRegistry();
         $this->registerBladeNodeTransformers();
         $this->registerJsonViewCompiler();
+        $this->registerPropertyTransformers();
     }
 
     public function boot(): void
@@ -157,5 +159,12 @@ class CraftileServiceProvider extends ServiceProvider
                 $discovery->scan($namespace, $path);
             }
         }
+    }
+
+    protected function registerPropertyTransformers()
+    {
+        $this->app->afterResolving(PropertyTransformerRegistry::class, function ($registry) {
+            $registry->register('__dynamic_source__', new DynamicSourceTransformer);
+        });
     }
 }
