@@ -172,6 +172,20 @@ class Craftile
     }
 
     /**
+     * Get the configured BlockSchema class.
+     */
+    public function getBlockSchemaClass(): string
+    {
+        $schemaClass = config('craftile.block_schema_class', BlockSchema::class);
+
+        if (! is_subclass_of($schemaClass, BlockSchema::class) && $schemaClass !== BlockSchema::class) {
+            throw new \InvalidArgumentException("BlockSchema class '{$schemaClass}' must extend Craftile\\Core\\Data\\BlockSchema");
+        }
+
+        return $schemaClass;
+    }
+
+    /**
      * Get block schema by type.
      */
     public function getBlockSchema(string $type): ?BlockSchema

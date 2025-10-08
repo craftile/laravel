@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool inPreview()
  * @method static bool shouldRenderBlock(BlockData $blockData)
  * @method static BlockData createBlockData(array $blockData, mixed $resolveChildData = null)
+ * @method static string getBlockSchemaClass()
  * @method static BlockSchema|null getBlockSchema(string $type)
  * @method static void registerPropertyTransformer(string $type, PropertyTransformerInterface|callable $transformer)
  * @method static string generateChildId(string $parentId, string $childLocalId)

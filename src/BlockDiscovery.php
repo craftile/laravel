@@ -3,7 +3,7 @@
 namespace Craftile\Laravel;
 
 use Craftile\Core\Contracts\BlockInterface;
-use Craftile\Core\Data\BlockSchema;
+use Craftile\Laravel\Facades\Craftile;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -49,7 +49,8 @@ class BlockDiscovery
                 continue;
             }
 
-            $schema = BlockSchema::fromClass($class);
+            $schemaClass = Craftile::getBlockSchemaClass();
+            $schema = $schemaClass::fromClass($class);
             $this->registry->register($schema);
         }
     }

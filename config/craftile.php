@@ -95,4 +95,15 @@ return [
     |
     */
     'block_data_class' => \Craftile\Laravel\BlockData::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | BlockSchema Class
+    |--------------------------------------------------------------------------
+    |
+    | Configure the default BlockSchema class used for block schema definitions.
+    | Must extend Craftile\Core\Data\BlockSchema.
+    |
+    */
+    'block_schema_class' => \Craftile\Core\Data\BlockSchema::class,
 ];
