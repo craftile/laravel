@@ -63,6 +63,7 @@ class BlockData extends CoreBlockData
             id: $blockData['id'] ?? '',
             type: $blockData['type'] ?? '',
             properties: self::createPropertyBag($blockData['properties'] ?? [], $blockData['type'] ?? ''),
+            name: $blockData['name'] ?? null,
             parentId: $blockData['parentId'] ?? null,
             childrenIds: $blockData['children'] ?? [],
             disabled: $blockData['disabled'] ?? false,
