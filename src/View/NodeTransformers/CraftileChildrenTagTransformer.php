@@ -60,6 +60,9 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
     protected function getCompiledCode(): string
     {
         return '<?php
+            if (craftile()->inPreview()) {
+                echo \'<!--BEGIN children \' . $block->id . \'-->\';
+            }
             $__childrenFilePath = app(\\Craftile\\Laravel\\View\\BlockCacheManager::class)->getChildrenFilePath($block->id);
             if(file_exists($__childrenFilePath)) {
                 // Extract parent context if available
@@ -67,6 +70,9 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
                     extract($__craftileContext);
                 }
                 require $__childrenFilePath;
+            }
+            if (craftile()->inPreview()) {
+                echo \'<!--END children \' . $block->id . \'-->\';
             }
         ?>';
     }
