@@ -3,6 +3,7 @@
 namespace Craftile\Laravel\View\NodeTransformers\Concerns;
 
 use Stillat\BladeParser\Nodes\Components\ComponentNode;
+use Stillat\BladeParser\Nodes\Components\ParameterType;
 
 trait HandlesComponentAttributes
 {
@@ -38,11 +39,22 @@ trait HandlesComponentAttributes
         }
 
         $properties = $attributes->map(function ($attr) {
-            return sprintf(
-                "'%s' => %s",
-                $attr->materializedName,
-                $this->isBladeLiteral($attr->value) ? $attr->valueNode->content : $attr->value
-            );
+            $value = $attr->value;
+
+            // For dynamic bindings (:variant="$var"), strip only the outer surrounding quotes
+            if ($attr->type === ParameterType::DynamicVariable ||
+                $attr->type === ParameterType::ShorthandDynamicVariable) {
+                // Remove only the first and last character if they are quotes
+                if (strlen($value) >= 2 && ($value[0] === '"' || $value[0] === "'") &&
+                    $value[0] === $value[strlen($value) - 1]) {
+                    $value = substr($value, 1, -1);
+                }
+            } elseif ($this->isBladeLiteral($value)) {
+                // For literals, use the content without quotes
+                $value = $attr->valueNode->content;
+            }
+
+            return sprintf("'%s' => %s", $attr->materializedName, $value);
         })->join(',');
 
         return '['.$properties.']';

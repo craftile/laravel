@@ -80,7 +80,7 @@ trait HandlesCraftileBlocks
         <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
 
         {$wrapperOpening}
-        {$compiler->compile($schema, $hash, '', $propertiesExpr)}
+        {$compiler->compile($schema, $hash, $propertiesExpr)}
         {$wrapperClosing}
 
         <?php endif; ?>
