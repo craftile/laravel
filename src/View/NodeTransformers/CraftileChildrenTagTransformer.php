@@ -61,7 +61,7 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
     {
         return '<?php
             if (craftile()->inPreview()) {
-                echo \'<!--BEGIN children \' . $block->id . \'-->\';
+                echo \'<!--BEGIN children: \' . $block->id . \'-->\';
             }
             $__childrenFilePath = app(\\Craftile\\Laravel\\View\\BlockCacheManager::class)->getChildrenFilePath($block->id);
             if(file_exists($__childrenFilePath)) {
@@ -72,7 +72,7 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
                 require $__childrenFilePath;
             }
             if (craftile()->inPreview()) {
-                echo \'<!--END children \' . $block->id . \'-->\';
+                echo \'<!--END children: \' . $block->id . \'-->\';
             }
         ?>';
     }
