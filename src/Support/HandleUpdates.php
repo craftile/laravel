@@ -21,11 +21,11 @@ class HandleUpdates
      */
     public function execute(array $sourceData, UpdateRequest $updateRequest, ?array $targetRegions = null): array
     {
+        $data = $this->normalizeSourceData($sourceData);
+
         if (! $this->hasUpdates($sourceData, $updateRequest, $targetRegions)) {
             return ['data' => $sourceData, 'updated' => false];
         }
-
-        $data = $this->normalizeSourceData($sourceData);
 
         if ($targetRegions === null) {
             return $this->applyUpdates($data, $updateRequest);
@@ -44,11 +44,25 @@ class HandleUpdates
     {
         if ($this->flattener->hasNestedStructure($sourceData)) {
             $sourceData = $this->flattener->flattenNestedStructure($sourceData);
+
+            return [
+                'blocks' => $sourceData['blocks'] ?? [],
+                'regions' => $sourceData['regions'] ?? [],
+            ];
         }
 
+        $regionName = $sourceData['name'] ?? 'main';
+        $blocks = $sourceData['blocks'] ?? [];
+        $blocksOrder = $sourceData['order'] ?? array_keys($blocks);
+
         return [
-            'blocks' => $sourceData['blocks'] ?? [],
-            'regions' => $sourceData['regions'] ?? [],
+            'blocks' => $blocks,
+            'regions' => [
+                [
+                    'name' => $regionName,
+                    'blocks' => $blocksOrder,
+                ],
+            ],
         ];
     }
 

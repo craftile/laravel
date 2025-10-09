@@ -42,6 +42,7 @@ trait HandlesCraftileBlocks
 
         $hash = hash('xxh128', $id);
         $idVar = '$__blockId'.$hash;
+        $parentIdVar = '$__blockParentId'.$hash;
         $blockDataVar = '$__blockData'.$hash;
 
         $compiler = app(BlockCompilerRegistry::class)->findCompiler($schema);
@@ -60,16 +61,17 @@ trait HandlesCraftileBlocks
         <?php
         if (isset(\$block)) {
             {$idVar} = craftile()->resolveStaticBlockId(\$block->id, '{$id}') ?? craftile()->generateChildId(\$block->id, '{$id}');
+            {$parentIdVar} = \$block->id;
         } else {
             {$idVar} = '{$id}';
+            {$parentIdVar} = null;
         }
 
-        {$blockDataVar} = BlockDatastore::getBlock({$idVar}, ['static' => true, 'repeated' => {$repeatedExpr}]);
+        {$blockDataVar} = BlockDatastore::getBlock({$idVar}, ['parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}]);
 
         if (!{$blockDataVar}) {
-            {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'static' => true, 'repeated' => {$repeatedExpr}]);
+            {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}]);
         }
-
         ?>
         <?php if (craftile()->inPreview()) {
             craftile()->startBlock({$idVar}, $blockDataVar);
