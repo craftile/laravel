@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static void loadFile(string $sourceFilePath)
- * @method static \Craftile\Laravel\BlockData|null getBlock(string $blockId, array $defaults = [])
+ * @method static \Craftile\Laravel\BlockData|null getBlock(string $blockId, array $overrides = [])
  * @method static bool hasBlock(string $blockId)
  * @method static array getBlocksArray(string $sourceFilePath)
  * @method static void clear()

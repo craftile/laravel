@@ -51,35 +51,29 @@ class BlockDatastore
      * Get a specific block by ID (must be loaded first).
      *
      * @param  string  $blockId  The block ID to retrieve
-     * @param  array  $defaults  Default values to merge with block data (block data takes precedence)
+     * @param  array  $overrides  Context values from template that override stored block data
      */
-    public function getBlock(string $blockId, array $defaults = []): ?BlockData
+    public function getBlock(string $blockId, array $overrides = []): ?BlockData
     {
         $existingBlock = self::$loadedBlocks[$blockId] ?? null;
-
-        if (! $existingBlock && empty($defaults)) {
-            return null;
-        }
 
         if (! $existingBlock) {
             return null;
         }
 
-        if (empty($defaults)) {
-            // No defaults to merge, return existing block
+        if (empty($overrides)) {
             return $existingBlock;
         }
 
-        // Merge defaults with existing block data (existing data takes precedence)
         $blockArray = $existingBlock->toArray();
 
         $mergedData = $blockArray;
-        if (isset($defaults['properties']) && isset($blockArray['properties'])) {
-            $mergedData['properties'] = array_merge($defaults['properties'], $blockArray['properties']);
+        if (isset($overrides['properties']) && isset($blockArray['properties'])) {
+            $mergedData['properties'] = array_merge($blockArray['properties'], $overrides['properties']);
         }
 
-        foreach ($defaults as $key => $value) {
-            if ($key !== 'properties' && ! isset($blockArray[$key])) {
+        foreach ($overrides as $key => $value) {
+            if ($key !== 'properties') {
                 $mergedData[$key] = $value;
             }
         }
