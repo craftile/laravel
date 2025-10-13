@@ -78,6 +78,10 @@ class HandleUpdates
 
         // Update blocks
         foreach ($updateRequest->getBlocks() as $blockId => $blockData) {
+            if (in_array($blockId, $blocksToRemove)) {
+                continue;
+            }
+
             $shouldUpdate = ! $filteredChanges ||
                 in_array($blockId, $regionBlocks) ||
                 in_array($blockId, $filteredChanges['added']);
@@ -90,7 +94,7 @@ class HandleUpdates
         // Update regions
         if (! empty($updateRequest->regions)) {
             $data['regions'] = $targetRegions
-                ? array_filter($updateRequest->regions, fn ($region) => in_array($region['name'], $targetRegions))
+                ? array_values(array_filter($updateRequest->regions, fn ($region) => in_array($region['name'], $targetRegions)))
                 : $updateRequest->regions;
         }
 
