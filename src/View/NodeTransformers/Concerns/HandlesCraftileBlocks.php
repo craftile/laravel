@@ -77,7 +77,7 @@ trait HandlesCraftileBlocks
             craftile()->startBlock({$idVar}, $blockDataVar);
         } ?>
 
-        <?php if (craftile()->shouldRenderBlock($blockDataVar)): ?>
+        <?php if (!{$blockDataVar}->isGhost() && craftile()->shouldRenderBlock($blockDataVar)): ?>
 
         {$wrapperOpening}
         {$compiler->compile($schema, $hash, $propertiesExpr)}

@@ -2,6 +2,8 @@
 
 namespace Craftile\Laravel;
 
+use Craftile\Laravel\Facades\BlockDatastore;
+
 class PreviewDataCollector
 {
     private array $regions = [];
@@ -78,8 +80,9 @@ class PreviewDataCollector
      * Start tracking a block.
      *
      * Prevents duplicate collection of static blocks in loops
+     * Automatically collects ghost children
      */
-    public function startBlock(string $blockId, \Craftile\Laravel\BlockData $blockData): void
+    public function startBlock(string $blockId, BlockData $blockData): void
     {
         // For static blocks, only store block data if not already collected
         if ($blockData->static && isset($this->blocks[$blockId])) {
@@ -87,6 +90,18 @@ class PreviewDataCollector
         }
 
         $this->blocks[$blockId] = $blockData->toArray();
+
+        // Collect all ghost children automatically
+        if ($blockData->hasChildren()) {
+            foreach ($blockData->childrenIds() as $childId) {
+                if (! isset($this->blocks[$childId])) {
+                    $childBlock = BlockDatastore::getBlock($childId);
+                    if ($childBlock && $childBlock->ghost) {
+                        $this->blocks[$childId] = $childBlock->toArray();
+                    }
+                }
+            }
+        }
 
         if ($blockData->parentId) {
             if (! isset($this->renderedChildren[$blockData->parentId])) {

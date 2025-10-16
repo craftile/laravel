@@ -69,6 +69,7 @@ class BlockData extends CoreBlockData
             disabled: $blockData['disabled'] ?? false,
             static: $blockData['static'] ?? false,
             repeated: $blockData['repeated'] ?? false,
+            ghost: $blockData['ghost'] ?? false,
             semanticId: $blockData['semanticId'] ?? null,
             index: $blockData['index'] ?? null,
             resolveChildData: $resolveChildData,

@@ -123,6 +123,11 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
                     continue;
                 }
 
+                // Skip ghost blocks - they are data-only, not rendered
+                if ($blockData['ghost'] ?? false) {
+                    continue;
+                }
+
                 $blocks .= $this->compileBlockSelectively($blockData, $template, $path);
             }
 
@@ -429,6 +434,11 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
             // Skip static children - they render via @craftileBlock in templates
             if ($childData['static'] ?? false) {
+                continue;
+            }
+
+            // Skip ghost children - they are data-only, not rendered
+            if ($childData['ghost'] ?? false) {
                 continue;
             }
 
