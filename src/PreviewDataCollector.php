@@ -98,19 +98,14 @@ class PreviewDataCollector
                     $childBlock = BlockDatastore::getBlock($childId);
                     if ($childBlock && $childBlock->ghost) {
                         $this->blocks[$childId] = $childBlock->toArray();
+                        $this->addToRenderedChildren($blockId, $childId);
                     }
                 }
             }
         }
 
         if ($blockData->parentId) {
-            if (! isset($this->renderedChildren[$blockData->parentId])) {
-                $this->renderedChildren[$blockData->parentId] = [];
-            }
-
-            if (! in_array($blockId, $this->renderedChildren[$blockData->parentId])) {
-                $this->renderedChildren[$blockData->parentId][] = $blockId;
-            }
+            $this->addToRenderedChildren($blockData->parentId, $blockId);
         }
 
         if ($this->currentRegion) {
@@ -130,6 +125,20 @@ class PreviewDataCollector
     public function endBlock(string $blockId): void
     {
         //
+    }
+
+    /**
+     * Add a child block to its parent's rendered children list.
+     */
+    private function addToRenderedChildren(string $parentId, string $childId): void
+    {
+        if (! isset($this->renderedChildren[$parentId])) {
+            $this->renderedChildren[$parentId] = [];
+        }
+
+        if (! in_array($childId, $this->renderedChildren[$parentId])) {
+            $this->renderedChildren[$parentId][] = $childId;
+        }
     }
 
     /**
