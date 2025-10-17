@@ -4,6 +4,7 @@ namespace Craftile\Laravel\Support;
 
 use Craftile\Laravel\BlockFlattener;
 use Craftile\Laravel\Data\UpdateRequest;
+use Craftile\Laravel\Facades\Craftile;
 
 class HandleUpdates
 {
@@ -42,6 +43,9 @@ class HandleUpdates
      */
     private function normalizeSourceData(array $sourceData): array
     {
+        // Apply custom normalizer if registered
+        $sourceData = Craftile::normalizeTemplate($sourceData);
+
         if ($this->flattener->hasNestedStructure($sourceData)) {
             $sourceData = $this->flattener->flattenNestedStructure($sourceData);
 

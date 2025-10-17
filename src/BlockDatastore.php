@@ -164,6 +164,9 @@ class BlockDatastore
 
         $template = [];
 
+        // Apply custom pre-normalizer if registered
+        $data = Craftile::normalizeTemplate($data);
+
         if ($this->flattener->hasNestedStructure($data)) {
             $template = $this->flattener->flattenNestedStructure($data);
             unset($template['_idMappings']);

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static void detectPreviewUsing(callable $detector)
  * @method static void checkIfBlockCanRenderUsing(callable $checker)
  * @method static void createBlockDataUsing(callable $factory)
+ * @method static void normalizeTemplateUsing(callable $normalizer)
+ * @method static array normalizeTemplate(array $templateData)
  * @method static bool inPreview()
  * @method static bool shouldRenderBlock(BlockData $blockData)
  * @method static BlockData createBlockData(array $blockData, mixed $resolveChildData = null)

@@ -7,6 +7,7 @@ use Craftile\Laravel\BlockFlattener;
 use Craftile\Laravel\BlockSchemaRegistry;
 use Craftile\Laravel\Contracts\BlockCompilerInterface;
 use Craftile\Laravel\Exceptions\JsonViewException;
+use Craftile\Laravel\Facades\Craftile;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\View\Compilers\Compiler;
@@ -307,6 +308,9 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
      */
     protected function normalizeTemplate(array $templateData): array
     {
+        // Apply custom pre-normalizer
+        $templateData = Craftile::normalizeTemplate($templateData);
+
         $normalized = $this->normalizeTemplateFormat($templateData);
 
         $flattener = app(BlockFlattener::class);

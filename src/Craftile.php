@@ -17,6 +17,8 @@ class Craftile
 
     protected $blockDataFactory = null;
 
+    protected $templateNormalizer = null;
+
     public function __construct(
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
@@ -56,6 +58,26 @@ class Craftile
     public function createBlockDataUsing(callable $factory): void
     {
         $this->blockDataFactory = $factory;
+    }
+
+    /**
+     * Register a custom template normalizer.
+     */
+    public function normalizeTemplateUsing(callable $normalizer): void
+    {
+        $this->templateNormalizer = $normalizer;
+    }
+
+    /**
+     * Normalize template data using the registered normalizer.
+     */
+    public function normalizeTemplate(array $templateData): array
+    {
+        if ($this->templateNormalizer) {
+            return call_user_func($this->templateNormalizer, $templateData);
+        }
+
+        return $templateData;
     }
 
     /**
