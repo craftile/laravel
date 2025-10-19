@@ -24,7 +24,7 @@ class HandleUpdates
     {
         $data = $this->normalizeSourceData($sourceData);
 
-        if (! $this->hasUpdates($sourceData, $updateRequest, $targetRegions)) {
+        if (! $this->hasUpdates($data, $updateRequest, $targetRegions)) {
             return ['data' => $sourceData, 'updated' => false];
         }
 
@@ -45,7 +45,6 @@ class HandleUpdates
     {
         // Apply custom normalizer if registered
         $sourceData = Craftile::normalizeTemplate($sourceData);
-
         if ($this->flattener->hasNestedStructure($sourceData)) {
             $sourceData = $this->flattener->flattenNestedStructure($sourceData);
 
@@ -74,6 +73,7 @@ class HandleUpdates
     {
         // Remove blocks
         $blocksToRemove = $filteredChanges['removed'] ?? $updateRequest->getRemovedBlocks();
+
         foreach ($blocksToRemove as $blockId) {
             if (isset($data['blocks'][$blockId])) {
                 unset($data['blocks'][$blockId]);
@@ -114,6 +114,7 @@ class HandleUpdates
 
         // Check removed blocks against source data regions
         $sourceRootBlocks = $this->getRootBlocksForRegions($data['regions'] ?? [], $targetRegions);
+
         foreach ($updateRequest->getRemovedBlocks() as $blockId) {
             if (
                 isset($data['blocks'][$blockId]) &&

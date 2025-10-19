@@ -19,7 +19,15 @@ class BladeComponentBlockCompiler implements BlockCompilerInterface
 
         return <<<PHP
         <?php
-        {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
+        // Root blocks (no parent) get page context and forward it child blocks via __craftileContext
+        if ({$blockDataVar}->parentId === null) {
+            {$contextVar} = craftile()->filterContext(get_defined_vars(), {$customAttributesExpr});
+        } else {
+            {$contextVar} = array_merge(
+                isset(\$__craftileContext) ? \$__craftileContext : [],
+                {$customAttributesExpr}
+            );
+        }
 
         // Inject context into PropertyBag for dynamic source resolution
         {$blockDataVar}->properties->setContext({$contextVar});
