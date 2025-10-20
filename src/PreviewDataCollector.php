@@ -142,10 +142,79 @@ class PreviewDataCollector
     }
 
     /**
+     * Collect all static/repeated children that may not have been rendered.
+     * Groups them with other static/repeated blocks, or at the end if none rendered.
+     */
+    private function collectUnrenderedStaticChildren(): void
+    {
+        foreach ($this->blocks as $blockId => $blockData) {
+            $childrenIds = $blockData['children'] ?? [];
+
+            if (empty($childrenIds)) {
+                continue;
+            }
+
+            // Find unrendered static/repeated children from BlockDatastore
+            $unrenderedStatic = [];
+
+            foreach ($childrenIds as $childId) {
+                // Skip if already collected
+                if (isset($this->blocks[$childId])) {
+                    continue;
+                }
+
+                // Try to get from BlockDatastore
+                $childBlock = BlockDatastore::getBlock($childId);
+
+                if (! $childBlock) {
+                    continue;
+                }
+
+                // Only collect static or repeated blocks
+                if ($childBlock->static || $childBlock->repeated) {
+                    $this->blocks[$childId] = $childBlock->toArray();
+                    $unrenderedStatic[] = $childId;
+                }
+            }
+
+            if (empty($unrenderedStatic)) {
+                continue;
+            }
+
+            // Find insertion point: after last static/repeated block, or at end
+            $renderedChildren = $this->renderedChildren[$blockId] ?? [];
+            $lastStaticIndex = -1;
+
+            foreach ($renderedChildren as $index => $childId) {
+                if (isset($this->blocks[$childId])) {
+                    $child = $this->blocks[$childId];
+                    if (($child['static'] ?? false) || ($child['repeated'] ?? false)) {
+                        $lastStaticIndex = $index;
+                    }
+                }
+            }
+
+            // If no static/repeated blocks were rendered, append at end
+            // Otherwise, insert after the last static/repeated block
+            $insertionIndex = $lastStaticIndex === -1
+                ? count($renderedChildren)
+                : $lastStaticIndex + 1;
+
+            // Insert unrendered static blocks at insertion point
+            array_splice($renderedChildren, $insertionIndex, 0, $unrenderedStatic);
+            $this->renderedChildren[$blockId] = $renderedChildren;
+        }
+    }
+
+    /**
      * Get all collected data in the format expected by the craftile preview client.
      */
     public function getCollectedData(): array
     {
+        // Collect static/repeated children that weren't rendered
+        // MUST happen BEFORE updating parent children arrays
+        $this->collectUnrenderedStaticChildren();
+
         // Update parent blocks with actual rendered children order
         foreach ($this->renderedChildren as $parentId => $childrenInOrder) {
             if (isset($this->blocks[$parentId])) {
