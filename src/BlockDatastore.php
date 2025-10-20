@@ -3,8 +3,7 @@
 namespace Craftile\Laravel;
 
 use Craftile\Laravel\Facades\Craftile;
-use Illuminate\Support\Facades\Cache;
-use Symfony\Component\Yaml\Yaml;
+use Craftile\Laravel\View\JsonViewParser;
 
 class BlockDatastore
 {
@@ -14,14 +13,8 @@ class BlockDatastore
      */
     private static array $loadedBlocks = [];
 
-    /**
-     * In-memory cache of parsed file data
-     * Structure: ['filePath' => ['blocks' => [...]]].
-     */
-    private static array $parsedFiles = [];
-
     public function __construct(
-        protected BlockFlattener $flattener
+        protected JsonViewParser $parser
     ) {}
 
     /**
@@ -105,73 +98,18 @@ class BlockDatastore
     }
 
     /**
-     * Get all blocks array from the given JSON file.
-     * Uses in-memory caching in preview mode, Laravel cache otherwise.
+     * Get all blocks array from the given file.
      */
     public function getBlocksArray(string $sourceFilePath): array
     {
-        if (isset(self::$parsedFiles[$sourceFilePath])) {
-            return self::$parsedFiles[$sourceFilePath];
-        }
-
-        $blocks = null;
-
-        // In preview mode, use only in-memory caching
-        if (Craftile::inPreview()) {
-            $blocks = $this->parseBlocksFromFile($sourceFilePath);
-        } else {
-            // In production mode, use Laravel cache
-            $cacheKey = 'craftile_blocks_'.md5($sourceFilePath.'_'.filemtime($sourceFilePath));
-            $cacheTtl = config('craftile.cache.ttl', 3600);
-            $blocks = Cache::remember($cacheKey, $cacheTtl, function () use ($sourceFilePath) {
-                return $this->parseBlocksFromFile($sourceFilePath);
-            });
-        }
-
-        self::$parsedFiles[$sourceFilePath] = $blocks;
-
-        return $blocks;
-    }
-
-    /**
-     * Parse blocks array from JSON or YAML file.
-     */
-    protected function parseBlocksFromFile(string $sourceFilePath): array
-    {
-        if (! file_exists($sourceFilePath)) {
+        try {
+            $template = $this->parser->parse($sourceFilePath);
+        } catch (\Exception $e) {
             return [];
         }
 
-        $content = file_get_contents($sourceFilePath);
-        $extension = strtolower(pathinfo($sourceFilePath, PATHINFO_EXTENSION));
-
-        if ($extension === 'yaml' || $extension === 'yml') {
-            try {
-                $data = Yaml::parse($content);
-            } catch (\Exception) {
-                return [];
-            }
-        } else {
-            $data = json_decode($content, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return [];
-            }
-        }
-
-        if (! is_array($data)) {
+        if (! is_array($template)) {
             return [];
-        }
-
-        $template = [];
-
-        // Apply custom pre-normalizer if registered
-        $data = Craftile::normalizeTemplate($data);
-
-        if ($this->flattener->hasNestedStructure($data)) {
-            $template = $this->flattener->flattenNestedStructure($data);
-            unset($template['_idMappings']);
-        } else {
-            $template = $data;
         }
 
         $blocks = $template['blocks'] ?? [];
@@ -211,6 +149,6 @@ class BlockDatastore
     public function clear(): void
     {
         self::$loadedBlocks = [];
-        self::$parsedFiles = [];
+        $this->parser->clearCache();
     }
 }

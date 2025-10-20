@@ -2,71 +2,40 @@
 
 namespace Craftile\Laravel\Support;
 
-use Craftile\Laravel\BlockFlattener;
 use Craftile\Laravel\Data\UpdateRequest;
-use Craftile\Laravel\Facades\Craftile;
+use Craftile\Laravel\View\JsonViewParser;
 
 class HandleUpdates
 {
     public function __construct(
-        private BlockFlattener $flattener
+        private JsonViewParser $parser
     ) {}
 
     /**
-     * Apply updates to source data, optionally filtering by target regions
+     * Apply updates to source data from file path, optionally filtering by target regions
      *
-     * @param  array  $sourceData  Original template data
+     * @param  string  $sourceFilePath  Path to source template file
      * @param  UpdateRequest  $updateRequest  Update request with new block states
      * @param  array|null  $targetRegions  Optional array of region names to limit updates to
      * @return array{data: array, updated: bool} Updated template data and whether changes were applied
      */
-    public function execute(array $sourceData, UpdateRequest $updateRequest, ?array $targetRegions = null): array
+    public function execute(string $sourceFilePath, UpdateRequest $updateRequest, ?array $targetRegions = null): array
     {
-        $data = $this->normalizeSourceData($sourceData);
+        // Get fully normalized data from parser's pipeline
+        $sourceData = $this->parser->parse($sourceFilePath);
 
-        if (! $this->hasUpdates($data, $updateRequest, $targetRegions)) {
+        if (! $this->hasUpdates($sourceData, $updateRequest, $targetRegions)) {
             return ['data' => $sourceData, 'updated' => false];
         }
 
         if ($targetRegions === null) {
-            return $this->applyUpdates($data, $updateRequest);
+            return $this->applyUpdates($sourceData, $updateRequest);
         }
 
-        $regionBlocks = $this->getAllRegionBlocks($data, $targetRegions, $updateRequest);
-        $filteredChanges = $this->filterChangesForRegions($updateRequest, $regionBlocks, $data, $targetRegions);
+        $regionBlocks = $this->getAllRegionBlocks($sourceData, $targetRegions, $updateRequest);
+        $filteredChanges = $this->filterChangesForRegions($updateRequest, $regionBlocks, $sourceData, $targetRegions);
 
-        return $this->applyUpdates($data, $updateRequest, $filteredChanges, $regionBlocks, $targetRegions);
-    }
-
-    /**
-     * Normalize source data to flat structure and ensure required keys
-     */
-    private function normalizeSourceData(array $sourceData): array
-    {
-        // Apply custom normalizer if registered
-        $sourceData = Craftile::normalizeTemplate($sourceData);
-        if ($this->flattener->hasNestedStructure($sourceData)) {
-            $sourceData = $this->flattener->flattenNestedStructure($sourceData);
-
-            return [
-                'blocks' => $sourceData['blocks'] ?? [],
-                'regions' => $sourceData['regions'] ?? [],
-            ];
-        }
-
-        $regionName = $sourceData['name'] ?? 'main';
-        $blocks = $sourceData['blocks'] ?? [];
-        $blocksOrder = $sourceData['order'] ?? array_keys($blocks);
-
-        return [
-            'blocks' => $blocks,
-            'regions' => [
-                [
-                    'name' => $regionName,
-                    'blocks' => $blocksOrder,
-                ],
-            ],
-        ];
+        return $this->applyUpdates($sourceData, $updateRequest, $filteredChanges, $regionBlocks, $targetRegions);
     }
 
     private function applyUpdates(array $data, UpdateRequest $updateRequest, ?array $filteredChanges = null, ?array $regionBlocks = null, ?array $targetRegions = null): array

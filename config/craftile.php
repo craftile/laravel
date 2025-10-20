@@ -106,4 +106,17 @@ return [
     |
     */
     'block_schema_class' => \Craftile\Core\Data\BlockSchema::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP Template Extensions
+    |--------------------------------------------------------------------------
+    |
+    | Configure custom file extensions for PHP-based templates (.craft.php).
+    | These files provide IDE support, autocomplete, and type checking.
+    |
+    | Default: ['craft.php']
+    |
+    */
+    'php_template_extensions' => ['craft.php'],
 ];

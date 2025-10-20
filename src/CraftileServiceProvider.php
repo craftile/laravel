@@ -11,6 +11,7 @@ use Craftile\Laravel\View\BlockCompilerRegistry;
 use Craftile\Laravel\View\Compilers\BladeComponentBlockCompiler;
 use Craftile\Laravel\View\CraftileTagsCompiler;
 use Craftile\Laravel\View\JsonViewCompiler;
+use Craftile\Laravel\View\JsonViewParser;
 use Craftile\Laravel\View\NodeTransformerRegistry;
 use Craftile\Laravel\View\NodeTransformers\CraftileBlockDirectiveTransformer;
 use Craftile\Laravel\View\NodeTransformers\CraftileBlockTagTransformer;
@@ -91,6 +92,8 @@ class CraftileServiceProvider extends ServiceProvider
      */
     protected function registerJsonViewCompiler()
     {
+        $this->app->singleton(JsonViewParser::class);
+
         $this->app->singleton(BlockCacheManager::class, function ($app) {
             return new BlockCacheManager($app['files']);
         });
@@ -100,7 +103,8 @@ class CraftileServiceProvider extends ServiceProvider
                 $app['files'],
                 $app['config']['view.compiled'],
                 $app['blade.compiler'],
-                $app[BlockCacheManager::class]
+                $app[BlockCacheManager::class],
+                $app[JsonViewParser::class]
             );
         });
 
@@ -117,7 +121,10 @@ class CraftileServiceProvider extends ServiceProvider
         });
 
         $this->app->afterResolving(\Illuminate\View\Factory::class, function ($view) {
-            $extensions = ['json', 'yml', 'yaml'];
+            $extensions = array_merge(
+                ['json', 'yml', 'yaml'],
+                config('craftile.php_template_extensions', ['craft.php'])
+            );
             foreach ($extensions as $extension) {
                 $view->addExtension($extension, 'jsonview');
             }
