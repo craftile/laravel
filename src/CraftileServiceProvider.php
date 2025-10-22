@@ -58,6 +58,7 @@ class CraftileServiceProvider extends ServiceProvider
 
         $this->app->booted(function () {
             $this->bootBladeExtensions();
+            $this->bootViewExtensions();
         });
     }
 
@@ -119,22 +120,25 @@ class CraftileServiceProvider extends ServiceProvider
 
             return $resolver;
         });
-
-        $this->app->afterResolving(\Illuminate\View\Factory::class, function ($view) {
-            $extensions = array_merge(
-                ['json', 'yml', 'yaml'],
-                config('craftile.php_template_extensions', ['craft.php'])
-            );
-            foreach ($extensions as $extension) {
-                $view->addExtension($extension, 'jsonview');
-            }
-        });
     }
 
     protected function bootBladeExtensions()
     {
         // Register Blade precompiler for craftile tags
         Blade::precompiler(app(CraftileTagsCompiler::class));
+    }
+
+    protected function bootViewExtensions()
+    {
+        $extensions = array_merge(
+            ['json', 'yml', 'yaml'],
+            config('craftile.php_template_extensions', ['craft.php'])
+        );
+
+        $view = $this->app['view'];
+        foreach ($extensions as $extension) {
+            $view->addExtension($extension, 'jsonview');
+        }
     }
 
     protected function bootRegisterBladeComponentBlocks()

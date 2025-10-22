@@ -158,21 +158,19 @@ class PreviewDataCollector
             $unrenderedStatic = [];
 
             foreach ($childrenIds as $childId) {
-                // Skip if already collected
                 if (isset($this->blocks[$childId])) {
                     continue;
                 }
 
-                // Try to get from BlockDatastore
                 $childBlock = BlockDatastore::getBlock($childId);
 
                 if (! $childBlock) {
                     continue;
                 }
 
-                // Only collect static or repeated blocks
+                // Only collect static or repeated blocks (and their entire tree)
                 if ($childBlock->static || $childBlock->repeated) {
-                    $this->blocks[$childId] = $childBlock->toArray();
+                    $this->collectBlockTree($childId);
                     $unrenderedStatic[] = $childId;
                 }
             }
@@ -207,12 +205,33 @@ class PreviewDataCollector
     }
 
     /**
+     * Recursively collect a block and all its children from BlockDatastore.
+     */
+    private function collectBlockTree(string $blockId): void
+    {
+        if (isset($this->blocks[$blockId])) {
+            return;
+        }
+
+        $block = BlockDatastore::getBlock($blockId);
+
+        if (! $block) {
+            return;
+        }
+
+        $this->blocks[$blockId] = $block->toArray();
+
+        $childrenIds = $block->childrenIds();
+        foreach ($childrenIds as $childId) {
+            $this->collectBlockTree($childId);
+        }
+    }
+
+    /**
      * Get all collected data in the format expected by the craftile preview client.
      */
     public function getCollectedData(): array
     {
-        // Collect static/repeated children that weren't rendered
-        // MUST happen BEFORE updating parent children arrays
         $this->collectUnrenderedStaticChildren();
 
         // Update parent blocks with actual rendered children order

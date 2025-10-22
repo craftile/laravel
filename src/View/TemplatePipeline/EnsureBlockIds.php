@@ -22,6 +22,7 @@ class EnsureBlockIds
 
         $blocks = $data['blocks'];
         $normalized = [];
+        $typeCounters = [];
 
         foreach ($blocks as $key => $block) {
             if (! is_array($block)) {
@@ -32,7 +33,16 @@ class EnsureBlockIds
                 if (is_string($key)) {
                     $block['id'] = $key;
                 } else {
-                    continue;
+                    $type = $block['type'] ?? 'block';
+                    $sanitizedType = $this->sanitizeTypeForId($type);
+
+                    if (! isset($typeCounters[$type])) {
+                        $typeCounters[$type] = 0;
+                    }
+
+                    $counter = $typeCounters[$type]++;
+                    $hash = substr(hash('xxh128', $type.'_'.$counter.'_'.json_encode($block)), 0, 8);
+                    $block['id'] = "{$sanitizedType}_{$counter}_{$hash}";
                 }
             }
 
@@ -43,5 +53,23 @@ class EnsureBlockIds
         $data['blocks'] = $normalized;
 
         return $next($data);
+    }
+
+    /**
+     * Sanitize block type for use in ID.
+     * Converts types like "@visual/some-block" to "visual_some_block"
+     */
+    private function sanitizeTypeForId(string $type): string
+    {
+        // Remove @ prefix
+        $sanitized = ltrim($type, '@');
+
+        // Replace / and - with _
+        $sanitized = str_replace(['/', '-'], '_', $sanitized);
+
+        // Convert to snake_case
+        $sanitized = strtolower($sanitized);
+
+        return $sanitized ?: 'block';
     }
 }
