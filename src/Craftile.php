@@ -36,6 +36,37 @@ class Craftile
     }
 
     /**
+     * Register a block by its class name.
+     *
+     * @param  string  $blockClass  Block class that implements BlockInterface
+     *
+     * @throws \InvalidArgumentException If class doesn't exist or doesn't implement BlockInterface
+     */
+    public function registerBlock(string $blockClass): void
+    {
+        if (! is_subclass_of($blockClass, \Craftile\Core\Contracts\BlockInterface::class)) {
+            throw new \InvalidArgumentException("Block class {$blockClass} must implement BlockInterface");
+        }
+
+        $schemaClass = $this->getBlockSchemaClass();
+        $schema = $schemaClass::fromClass($blockClass);
+
+        $this->schemaRegistry->register($schema);
+    }
+
+    /**
+     * Register multiple blocks at once.
+     *
+     * @param  array<string>  $blockClasses  Array of block classes
+     */
+    public function registerBlocks(array $blockClasses): void
+    {
+        foreach ($blockClasses as $blockClass) {
+            $this->registerBlock($blockClass);
+        }
+    }
+
+    /**
      * Register a custom preview mode detector.
      */
     public function detectPreviewUsing(callable $detector): void
