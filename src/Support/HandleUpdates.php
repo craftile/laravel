@@ -45,7 +45,18 @@ class HandleUpdates
 
         foreach ($blocksToRemove as $blockId) {
             if (isset($data['blocks'][$blockId])) {
+                // Get all descendants to remove entire subtree
+                $descendants = $this->getAllDescendants($blockId, $data['blocks']);
+
+                // Remove the block itself
                 unset($data['blocks'][$blockId]);
+
+                // Remove all descendants
+                foreach ($descendants as $descendantId) {
+                    if (isset($data['blocks'][$descendantId])) {
+                        unset($data['blocks'][$descendantId]);
+                    }
+                }
             }
         }
 
@@ -184,5 +195,27 @@ class HandleUpdates
             'removed' => array_filter($updateRequest->getRemovedBlocks(), $inRegion),
             'moved' => array_filter($updateRequest->getMovedBlocks(), $inRegion, ARRAY_FILTER_USE_KEY),
         ];
+    }
+
+    /**
+     * Get all descendant block IDs for a given block (recursive).
+     */
+    private function getAllDescendants(string $blockId, array $blocks): array
+    {
+        $descendants = [];
+
+        if (! isset($blocks[$blockId]) || empty($blocks[$blockId]['children'])) {
+            return $descendants;
+        }
+
+        foreach ($blocks[$blockId]['children'] as $childId) {
+            $descendants[] = $childId;
+            $descendants = array_merge(
+                $descendants,
+                $this->getAllDescendants($childId, $blocks)
+            );
+        }
+
+        return $descendants;
     }
 }
