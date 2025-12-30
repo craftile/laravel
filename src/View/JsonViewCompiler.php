@@ -73,10 +73,11 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
         try {
             $compiledTemplate = $this->compileTemplate($template, $path);
+            $escapedPath = var_export($path, true);
 
             return <<<PHP
-            <?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile("$path"); ?>
-            <?php \\Craftile\\Laravel\\Events\\JsonViewLoaded::dispatch("$path"); ?>
+            <?php \\Craftile\\Laravel\\Facades\\BlockDatastore::loadFile($escapedPath); ?>
+            <?php \\Craftile\\Laravel\\Events\\JsonViewLoaded::dispatch($escapedPath); ?>
             $compiledTemplate
             PHP;
         } catch (JsonViewException $e) {
