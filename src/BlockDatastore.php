@@ -28,7 +28,6 @@ class BlockDatastore
 
         $blocks = $this->getBlocksArray($sourceFilePath);
 
-        // Create BlockData for each block and store in cache
         foreach ($blocks as $blockId => $blockData) {
             $block = Craftile::createBlockData(
                 $blockData,
@@ -124,7 +123,6 @@ class BlockDatastore
      */
     protected function assignBlockIndices(array &$blocks, array $template): void
     {
-        // Assign indices for blocks in regions
         foreach ($template['regions'] ?? [] as $region) {
             foreach ($region['blocks'] ?? [] as $index => $blockId) {
                 if (isset($blocks[$blockId])) {
@@ -133,7 +131,6 @@ class BlockDatastore
             }
         }
 
-        // Assign indices for child blocks
         foreach ($blocks as $blockId => $blockData) {
             foreach ($blockData['children'] ?? [] as $index => $childId) {
                 if (isset($blocks[$childId])) {

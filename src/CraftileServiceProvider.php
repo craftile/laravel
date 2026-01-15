@@ -33,6 +33,7 @@ class CraftileServiceProvider extends ServiceProvider
         $this->app->singleton(BlockSchemaRegistry::class);
         $this->app->singleton(PropertyTransformerRegistry::class);
         $this->app->singleton(BlockDiscovery::class);
+        $this->app->singleton(PresetDiscovery::class);
         $this->app->singleton(BlockFlattener::class);
         $this->app->singleton(BlockDatastore::class);
         $this->app->singleton(PreviewDataCollector::class);

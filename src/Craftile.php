@@ -23,6 +23,7 @@ class Craftile
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
         protected BlockDiscovery $blockDiscovery,
+        protected PresetDiscovery $presetDiscovery,
         protected PreviewDataCollector $previewDataCollector,
         protected BlockDatastore $blockDatastore
     ) {}
@@ -33,6 +34,14 @@ class Craftile
     public function discoverBlocksIn(string $namespace, string $directory): void
     {
         $this->blockDiscovery->scan($namespace, $directory);
+    }
+
+    /**
+     * Discover presets in a directory.
+     */
+    public function discoverPresetsIn(string $namespace, string $directory): void
+    {
+        $this->presetDiscovery->scan($namespace, $directory);
     }
 
     /**

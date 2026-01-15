@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static void discoverBlocksIn(string $namespace, string $directory)
+ * @method static void discoverPresetsIn(string $namespace, string $directory)
  * @method static void registerBlock(string $blockClass)
  * @method static void registerBlocks(array $blockClasses)
  * @method static void detectPreviewUsing(callable $detector)

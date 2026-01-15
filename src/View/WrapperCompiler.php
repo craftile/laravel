@@ -23,12 +23,10 @@ class WrapperCompiler
      */
     public static function compileWrapper(string $emmet, string $blockId): array
     {
-        // If emmet doesn't contain __content__, append it
         if (! str_contains($emmet, '__content__')) {
             $emmet .= '{__content__}';
         }
 
-        // Parse the emmet syntax to HTML
         $html = SimpleEmmetParser::parse($emmet);
 
         // Inject data-block attribute into the first tag
@@ -39,7 +37,6 @@ class WrapperCompiler
             1
         );
 
-        // Split by __content__ placeholder
         [$opening, $closing] = explode('__content__', $html, 2);
 
         return [$opening, $closing];

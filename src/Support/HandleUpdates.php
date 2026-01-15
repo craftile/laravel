@@ -21,7 +21,6 @@ class HandleUpdates
      */
     public function execute(string $sourceFilePath, UpdateRequest $updateRequest, ?array $targetRegions = null): array
     {
-        // Get fully normalized data from parser's pipeline
         $sourceData = $this->parser->parse($sourceFilePath);
 
         if (! $this->hasUpdates($sourceData, $updateRequest, $targetRegions)) {
@@ -45,13 +44,10 @@ class HandleUpdates
 
         foreach ($blocksToRemove as $blockId) {
             if (isset($data['blocks'][$blockId])) {
-                // Get all descendants to remove entire subtree
                 $descendants = $this->getAllDescendants($blockId, $data['blocks']);
 
-                // Remove the block itself
                 unset($data['blocks'][$blockId]);
 
-                // Remove all descendants
                 foreach ($descendants as $descendantId) {
                     if (isset($data['blocks'][$descendantId])) {
                         unset($data['blocks'][$descendantId]);
