@@ -52,8 +52,12 @@ class DefaultBlockCompiler implements BlockCompilerInterface
             // Inject context into PropertyBag for dynamic source resolution
             {$blockDataVar}->properties->setContext(\$__mergedContext);
 
+            // Get additional view data from data() if exists
+            \$__extraData = method_exists({$instanceVar}, 'data') ? {$instanceVar}->data() : [];
+
             {$viewDataVar} = array_merge(
                 \$__mergedContext,
+                \$__extraData,
                 ['block' => {$blockDataVar}, '__craftileContext' => \$__mergedContext]
             );
 
