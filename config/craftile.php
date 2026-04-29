@@ -1,5 +1,8 @@
 <?php
 
+use Craftile\Core\Data\BlockSchema;
+use Craftile\Laravel\BlockData;
+
 return [
     'discovery' => [
         'enabled' => true,
@@ -94,7 +97,7 @@ return [
     | Must extend Craftile\Laravel\BlockData.
     |
     */
-    'block_data_class' => \Craftile\Laravel\BlockData::class,
+    'block_data_class' => BlockData::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -105,7 +108,7 @@ return [
     | Must extend Craftile\Core\Data\BlockSchema.
     |
     */
-    'block_schema_class' => \Craftile\Core\Data\BlockSchema::class,
+    'block_schema_class' => BlockSchema::class,
 
     /*
     |--------------------------------------------------------------------------

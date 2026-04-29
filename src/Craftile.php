@@ -2,6 +2,7 @@
 
 namespace Craftile\Laravel;
 
+use Craftile\Core\Contracts\BlockInterface;
 use Craftile\Core\Data\BlockSchema;
 use Craftile\Laravel\Contracts\PropertyTransformerInterface;
 
@@ -53,7 +54,7 @@ class Craftile
      */
     public function registerBlock(string $blockClass): void
     {
-        if (! is_subclass_of($blockClass, \Craftile\Core\Contracts\BlockInterface::class)) {
+        if (! is_subclass_of($blockClass, BlockInterface::class)) {
             throw new \InvalidArgumentException("Block class {$blockClass} must implement BlockInterface");
         }
 

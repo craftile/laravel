@@ -3,6 +3,7 @@
 namespace Craftile\Laravel\View\NodeTransformers\Concerns;
 
 use Craftile\Laravel\View\BlockCompilerRegistry;
+use Craftile\Laravel\View\WrapperCompiler;
 use Illuminate\View\Compilers\ComponentTagCompiler;
 use Stillat\BladeParser\Document\Document;
 use Stillat\BladeParser\Nodes\AbstractNode;
@@ -54,7 +55,7 @@ trait HandlesCraftileBlocks
         $wrapperOpening = '';
         $wrapperClosing = '';
         if ($schema->wrapper) {
-            [$wrapperOpening, $wrapperClosing] = \Craftile\Laravel\View\WrapperCompiler::compileWrapper($schema->wrapper, $id);
+            [$wrapperOpening, $wrapperClosing] = WrapperCompiler::compileWrapper($schema->wrapper, $id);
         }
 
         $template = <<<PHP

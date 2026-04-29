@@ -21,6 +21,7 @@ use Craftile\Laravel\View\NodeTransformers\CraftileRegionDirectiveTransformer;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Component;
 use Illuminate\View\Engines\CompilerEngine;
 
 class CraftileServiceProvider extends ServiceProvider
@@ -145,7 +146,7 @@ class CraftileServiceProvider extends ServiceProvider
     protected function bootRegisterBladeComponentBlocks()
     {
         Event::listen(BlockSchemaRegistered::class, function (BlockSchemaRegistered $event) {
-            if ($event->schema->class && is_subclass_of($event->schema->class, \Illuminate\View\Component::class)) {
+            if ($event->schema->class && is_subclass_of($event->schema->class, Component::class)) {
                 $componentName = 'craftile-'.$event->schema->slug;
                 Blade::component($componentName, $event->schema->class);
             }

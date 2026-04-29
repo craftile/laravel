@@ -1,10 +1,12 @@
 <?php
 
+use Craftile\Laravel\Craftile;
+
 if (! function_exists('craftile')) {
     /**
      * Get the Craftile manager instance.
      *
-     * @return \Craftile\Laravel\Craftile
+     * @return Craftile
      */
     function craftile()
     {

@@ -4,12 +4,13 @@ namespace Craftile\Laravel\View\Compilers;
 
 use Craftile\Core\Data\BlockSchema;
 use Craftile\Laravel\Contracts\BlockCompilerInterface;
+use Illuminate\View\Component;
 
 class BladeComponentBlockCompiler implements BlockCompilerInterface
 {
     public function supports(BlockSchema $schema): bool
     {
-        return is_subclass_of($schema->class, \Illuminate\View\Component::class);
+        return is_subclass_of($schema->class, Component::class);
     }
 
     public function compile(BlockSchema $schema, string $hash, string $customAttributesExpr = '[]'): string

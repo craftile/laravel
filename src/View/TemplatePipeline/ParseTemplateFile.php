@@ -3,6 +3,7 @@
 namespace Craftile\Laravel\View\TemplatePipeline;
 
 use Closure;
+use Craftile\Core\Data\Template;
 use Craftile\Laravel\Exceptions\JsonViewException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -79,7 +80,7 @@ class ParseTemplateFile
                 return $result;
             }
 
-            if ($result instanceof \Craftile\Core\Data\Template) {
+            if ($result instanceof Template) {
                 return $result();
             }
 
