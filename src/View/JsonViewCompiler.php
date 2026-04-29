@@ -204,8 +204,14 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
     protected function compileStaticBlockChildren(array $template, string $path): void
     {
         foreach ($template['blocks'] as $blockData) {
-            if (($blockData['static'] ?? false) && ! empty($blockData['children'])) {
+            if (! ($blockData['static'] ?? false)) {
+                continue;
+            }
+
+            if (! empty($blockData['children'])) {
                 $this->compileChildrenToFile($blockData, $template, $path);
+            } else {
+                $this->cacheManager->flushChildrenFile($blockData['id']);
             }
         }
     }

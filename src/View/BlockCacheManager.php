@@ -79,6 +79,8 @@ class BlockCacheManager
      */
     public function flushBlock(string $blockId): bool
     {
+        $this->flushChildrenFile($blockId);
+
         $basePath = config('view.compiled');
         $pattern = "{$basePath}/craftile-{$blockId}-*.php";
 
@@ -93,9 +95,6 @@ class BlockCacheManager
                 $success = false;
             }
         }
-
-        // Also flush children file for this block
-        $this->flushChildrenFile($blockId);
 
         return $success;
     }
