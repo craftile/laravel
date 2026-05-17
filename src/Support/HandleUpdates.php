@@ -16,7 +16,7 @@ class HandleUpdates
      *
      * @param  string  $sourceFilePath  Path to source template file
      * @param  UpdateRequest  $updateRequest  Update request with new block states
-     * @param  array|null  $targetRegions  Optional array of region names to limit updates to
+     * @param  array|null  $targetRegions  Optional array of region IDs to limit updates to
      * @return array{data: array, updated: bool} Updated template data and whether changes were applied
      */
     public function execute(string $sourceFilePath, UpdateRequest $updateRequest, ?array $targetRegions = null): array
@@ -74,7 +74,7 @@ class HandleUpdates
         // Update regions
         if (! empty($updateRequest->regions)) {
             $data['regions'] = $targetRegions
-                ? array_values(array_filter($updateRequest->regions, fn ($region) => in_array($region['name'], $targetRegions)))
+                ? array_values(array_filter($updateRequest->regions, fn ($region) => in_array($this->getRegionId($region), $targetRegions)))
                 : $updateRequest->regions;
         }
 
@@ -148,12 +148,17 @@ class HandleUpdates
         $rootBlocks = [];
 
         foreach ($regions as $region) {
-            if (in_array($region['name'], $targetRegions)) {
+            if (in_array($this->getRegionId($region), $targetRegions)) {
                 $rootBlocks = array_merge($rootBlocks, $region['blocks'] ?? []);
             }
         }
 
         return array_unique($rootBlocks);
+    }
+
+    private function getRegionId(array $region): ?string
+    {
+        return $region['id'] ?? $region['name'] ?? null;
     }
 
     /**

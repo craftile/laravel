@@ -103,7 +103,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
         $regionsCodes = [];
         foreach ($templateData['regions'] as $region) {
-            $regionName = $region['name'] ?? 'unnamed';
+            $regionId = $region['id'] ?? $region['name'] ?? 'unnamed';
 
             $blocks = '';
             foreach ($region['blocks'] as $blockId) {
@@ -128,13 +128,13 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
             $regionCode = <<<PHP
             <?php if (craftile()->inPreview()) {
-                craftile()->startRegion("{$regionName}");
-                echo '<!--BEGIN region: {$regionName}-->';
+                craftile()->startRegion("{$regionId}");
+                echo '<!--BEGIN region: {$regionId}-->';
             } ?>
             {$blocks}
             <?php if (craftile()->inPreview()) {
-                echo '<!--END region: {$regionName}-->';
-                craftile()->endRegion("{$regionName}");
+                echo '<!--END region: {$regionId}-->';
+                craftile()->endRegion("{$regionId}");
             } ?>
             PHP;
 

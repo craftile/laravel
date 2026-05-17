@@ -38,19 +38,19 @@ class CraftileRegionDirectiveTransformer implements NodeTransformerInterface
         $regionDirective = $directives['craftileRegion'] ?? 'craftileRegion';
 
         if ($node->arguments === null) {
-            $this->throwError("@{$regionDirective} requires one argument: region name", $node);
+            $this->throwError("@{$regionDirective} requires one argument: region ID", $node);
         }
 
         $args = $node->arguments->getArgValues();
 
         if ($args->count() < 1) {
-            $this->throwError("@{$regionDirective} requires one argument: region name", $node);
+            $this->throwError("@{$regionDirective} requires one argument: region ID", $node);
         }
 
-        $regionNameExpr = $args[0];
+        $regionIdExpr = $args[0];
 
         // Transform to use temp variable and Laravel's @includeIf
-        $compiled = "<?php \$__regionView = craftile()->resolveRegionView({$regionNameExpr}); ?>".
+        $compiled = "<?php \$__regionView = craftile()->resolveRegionView({$regionIdExpr}); ?>".
                    '@includeIf($__regionView)'.
                    '<?php unset($__regionView); ?>';
 

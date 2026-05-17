@@ -303,17 +303,17 @@ class Craftile
     }
 
     /**
-     * Resolve a region view name.
+     * Resolve a region view name from its region ID.
      */
-    public function resolveRegionView(string $regionName): string
+    public function resolveRegionView(string $regionId): string
     {
         if ($this->regionViewResolver) {
-            return call_user_func($this->regionViewResolver, $regionName);
+            return call_user_func($this->regionViewResolver, $regionId);
         }
 
         $prefix = config('craftile.region_view_prefix', 'regions');
 
-        return "{$prefix}.{$regionName}";
+        return "{$prefix}.{$regionId}";
     }
 
     /**
