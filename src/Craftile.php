@@ -143,17 +143,17 @@ class Craftile
     /**
      * Start tracking a region (delegates to PreviewDataCollector).
      */
-    public function startRegion(string $regionName): void
+    public function startRegion(string $regionId, ?string $regionName = null): void
     {
-        $this->previewDataCollector->startRegion($regionName);
+        $this->previewDataCollector->startRegion($regionId, $regionName);
     }
 
     /**
      * End tracking a region (delegates to PreviewDataCollector).
      */
-    public function endRegion(string $regionName): void
+    public function endRegion(string $regionId): void
     {
-        $this->previewDataCollector->endRegion($regionName);
+        $this->previewDataCollector->endRegion($regionId);
     }
 
     /**

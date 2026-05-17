@@ -33,45 +33,47 @@ class PreviewDataCollector
     /**
      * Start tracking a region.
      */
-    public function startRegion(string $regionName): void
+    public function startRegion(string $regionId, ?string $regionName = null): void
     {
-        $this->currentRegion = $regionName;
+        $this->currentRegion = $regionId;
+        $regionName ??= $regionId;
 
         // Categorize region based on current layer
         if ($this->currentLayer === 'beforeContent') {
-            if (! in_array($regionName, $this->regionsBeforeContent)) {
-                $this->regionsBeforeContent[] = $regionName;
+            if (! in_array($regionId, $this->regionsBeforeContent)) {
+                $this->regionsBeforeContent[] = $regionId;
             }
         } elseif ($this->currentLayer === 'content') {
-            if (! in_array($regionName, $this->regionsInContent)) {
-                $this->regionsInContent[] = $regionName;
+            if (! in_array($regionId, $this->regionsInContent)) {
+                $this->regionsInContent[] = $regionId;
             }
         } else { // afterContent
-            if (! in_array($regionName, $this->regionsAfterContent)) {
-                $this->regionsAfterContent[] = $regionName;
+            if (! in_array($regionId, $this->regionsAfterContent)) {
+                $this->regionsAfterContent[] = $regionId;
             }
         }
 
         // Initialize region if not exists (may already exist from JSON data)
-        if (! isset($this->regions[$regionName])) {
-            $this->regions[$regionName] = [
+        if (! isset($this->regions[$regionId])) {
+            $this->regions[$regionId] = [
+                'id' => $regionId,
                 'name' => $regionName,
                 'blocks' => [],
             ];
         }
 
         // Track as shared region if not in content region
-        if (! $this->inContentRegion && ! in_array($regionName, $this->sharedRegions)) {
-            $this->sharedRegions[] = $regionName;
+        if (! $this->inContentRegion && ! in_array($regionId, $this->sharedRegions)) {
+            $this->sharedRegions[] = $regionId;
         }
     }
 
     /**
      * End tracking a region.
      */
-    public function endRegion(string $regionName): void
+    public function endRegion(string $regionId): void
     {
-        if ($this->currentRegion === $regionName) {
+        if ($this->currentRegion === $regionId) {
             $this->currentRegion = null;
         }
     }
