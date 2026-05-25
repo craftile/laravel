@@ -23,22 +23,26 @@ class PropertyTransformerRegistry
     }
 
     /**
-     * Transform a value using the registered transformer for the given type.
+     * Transform a value using the registered transformer for the schema's type.
+     *
+     * @param  array<string, mixed>  $schema
      */
-    public function transform(mixed $value, string $type): mixed
+    public function transform(mixed $value, array $schema): mixed
     {
-        if (! isset($this->transformers[$type])) {
+        $type = $schema['type'] ?? null;
+
+        if ($type === null || ! isset($this->transformers[$type])) {
             return $value;
         }
 
         $transformer = $this->transformers[$type];
 
         if ($transformer instanceof PropertyTransformerInterface) {
-            return $transformer->transform($value);
+            return $transformer->transform($value, $schema);
         }
 
         if (is_callable($transformer)) {
-            return $transformer($value);
+            return $transformer($value, $schema);
         }
 
         return $value;

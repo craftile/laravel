@@ -15,16 +15,17 @@ class DynamicSourceTransformer implements PropertyTransformerInterface
 {
     /**
      * Transform a DynamicSource by resolving it from context.
+     *
+     * @param  array<string, mixed>  $schema
      */
-    public function transform(mixed $value): mixed
+    public function transform(mixed $value, array $schema): mixed
     {
         if (! $value instanceof DynamicSource) {
             return $value;
         }
 
-        // Resolve the value from context using dot notation
-        $resolved = Arr::get($value->context, $value->path, $value->default);
+        $default = $value->schema['default'] ?? null;
 
-        return $resolved;
+        return Arr::get($value->context, $value->path, $default);
     }
 }
