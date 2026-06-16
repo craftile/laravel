@@ -4,7 +4,6 @@ namespace Craftile\Laravel;
 
 use Craftile\Core\Contracts\BlockInterface;
 use Craftile\Core\Data\BlockPreset;
-use Craftile\Laravel\Exceptions\InvalidDiscoveryRootException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -87,22 +86,26 @@ class DiscoveryManifest
      */
     protected function resolveRoots(array $roots, string $type): array
     {
-        return array_map(function (array $root) use ($type) {
+        $resolved = [];
+
+        foreach ($roots as $root) {
             if (! $this->files->isDirectory($root['path'])) {
-                throw new InvalidDiscoveryRootException("Craftile discovery {$type} root [{$root['path']}] does not exist.");
+                continue;
             }
 
             $realPath = realpath($root['path']);
 
             if ($realPath === false) {
-                throw new InvalidDiscoveryRootException("Craftile discovery {$type} root [{$root['path']}] could not be resolved.");
+                continue;
             }
 
-            return [
+            $resolved[] = [
                 'namespace' => $root['namespace'],
                 'path' => $realPath,
             ];
-        }, $roots);
+        }
+
+        return $resolved;
     }
 
     /**
