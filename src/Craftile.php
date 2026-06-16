@@ -28,6 +28,9 @@ class Craftile
     /** @var callable|null */
     protected $templateNormalizer = null;
 
+    /** @var callable|null */
+    protected $discoveredSchemaFilter = null;
+
     protected bool $discoveredSchemasRegistered = false;
 
     public function __construct(
@@ -58,19 +61,24 @@ class Craftile
     /**
      * Register deferred discovered block schemas and presets.
      */
-    public function registerDiscoveredSchemas(): void
+    public function registerDiscoveredSchemas(?callable $filter = null): void
     {
         if ($this->discoveredSchemasRegistered) {
             return;
         }
 
         $manifest = $this->discoveryManifest->get();
+        $filter ??= $this->discoveredSchemaFilter;
 
         foreach ($manifest['blocks'] as $block) {
+            if (! $this->shouldRegisterDiscoveredEntry($block, 'block', $filter)) {
+                continue;
+            }
+
             $class = (string) $block['class'];
 
             try {
-                if (! is_subclass_of((string) $class, BlockInterface::class)) {
+                if (! is_subclass_of($class, BlockInterface::class)) {
                     throw new \InvalidArgumentException("Discovered block class {$class} must implement ".BlockInterface::class);
                 }
 
@@ -81,6 +89,10 @@ class Craftile
         }
 
         foreach ($manifest['presets'] as $preset) {
+            if (! $this->shouldRegisterDiscoveredEntry($preset, 'preset', $filter)) {
+                continue;
+            }
+
             $class = (string) $preset['class'];
 
             try {
@@ -95,6 +107,11 @@ class Craftile
         }
 
         $this->discoveredSchemasRegistered = true;
+    }
+
+    public function filterDiscoveredSchemasUsing(?callable $filter): void
+    {
+        $this->discoveredSchemaFilter = $filter;
     }
 
     public function discoveredSchemasRegistered(): bool
@@ -149,6 +166,19 @@ class Craftile
         }
 
         $this->schemaRegistry->registerPreset($type, $presetClass);
+    }
+
+    /**
+     * @param  array{class: string, path: string, namespace: string}  $entry
+     * @param  'block'|'preset'  $type
+     */
+    protected function shouldRegisterDiscoveredEntry(array $entry, string $type, ?callable $filter): bool
+    {
+        if ($filter === null) {
+            return true;
+        }
+
+        return (bool) call_user_func($filter, $entry, $type);
     }
 
     /**
