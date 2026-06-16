@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Craftile\Laravel;
 
+use Craftile\Laravel\Console\CacheCraftileCommand;
+use Craftile\Laravel\Console\ClearCraftileCommand;
 use Craftile\Laravel\Events\BlockSchemaRegistered;
 use Craftile\Laravel\PropertyTransformers\DynamicSourceTransformer;
 use Craftile\Laravel\View\BlockCacheManager;
@@ -33,8 +35,8 @@ class CraftileServiceProvider extends ServiceProvider
         $this->app->singleton('craftile', Craftile::class);
         $this->app->singleton(BlockSchemaRegistry::class);
         $this->app->singleton(PropertyTransformerRegistry::class);
-        $this->app->singleton(BlockDiscovery::class);
-        $this->app->singleton(PresetDiscovery::class);
+        $this->app->singleton(DiscoveryRoots::class);
+        $this->app->singleton(DiscoveryManifest::class);
         $this->app->singleton(BlockFlattener::class);
         $this->app->singleton(BlockDatastore::class);
         $this->app->singleton(PreviewDataCollector::class);
@@ -53,10 +55,19 @@ class CraftileServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/craftile.php' => config_path('craftile.php'),
             ], 'craftile-config');
+
+            $this->commands([
+                CacheCraftileCommand::class,
+                ClearCraftileCommand::class,
+            ]);
+
+            $this->optimizes(
+                optimize: 'craftile:cache',
+                clear: 'craftile:clear',
+            );
         }
 
         $this->bootRegisterBladeComponentBlocks();
-        $this->bootAutoDiscovery();
 
         $this->app->booted(function () {
             $this->bootBladeExtensions();
@@ -117,7 +128,7 @@ class CraftileServiceProvider extends ServiceProvider
 
         $this->app->extend('view.engine.resolver', function ($resolver) {
             $resolver->register('jsonview', function () {
-                return new CompilerEngine($this->app['jsonview.compiler'], $this->app['files']);
+                return new CompilerEngine($this->app->get('jsonview.compiler'), $this->app->get('files'));
             });
 
             return $resolver;
@@ -137,7 +148,8 @@ class CraftileServiceProvider extends ServiceProvider
             config('craftile.php_template_extensions', ['craft.php'])
         );
 
-        $view = $this->app['view'];
+        $view = $this->app->get('view');
+
         foreach ($extensions as $extension) {
             $view->addExtension($extension, 'jsonview');
         }
@@ -151,27 +163,6 @@ class CraftileServiceProvider extends ServiceProvider
                 Blade::component($componentName, $event->schema->class);
             }
         });
-    }
-
-    protected function bootAutoDiscovery()
-    {
-        if (! config('craftile.discovery.enabled', true)) {
-            return;
-        }
-
-        $discovery = $this->app->make(BlockDiscovery::class);
-        $paths = config('craftile.discovery.paths', []);
-
-        foreach ($paths as $namespace => $path) {
-            if (is_numeric($namespace)) {
-                // If no namespace provided
-                $namespace = 'App\\Blocks';
-            }
-
-            if (is_dir($path)) {
-                $discovery->scan($namespace, $path);
-            }
-        }
     }
 
     protected function registerPropertyTransformers()

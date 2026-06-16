@@ -3,28 +3,38 @@
 namespace Craftile\Laravel;
 
 use Craftile\Core\Contracts\BlockInterface;
+use Craftile\Core\Data\BlockPreset;
 use Craftile\Core\Data\BlockSchema;
 use Craftile\Laravel\Contracts\PropertyTransformerInterface;
+use Craftile\Laravel\Exceptions\DiscoveredSchemaRegistrationException;
+use Throwable;
 
 class Craftile
 {
+    /** @var callable|null */
     protected $previewDetector = null;
 
     protected ?bool $previewModeCache = null;
 
+    /** @var callable|null */
     protected $regionViewResolver = null;
 
+    /** @var callable|null */
     protected $renderBlockChecker = null;
 
+    /** @var callable|null */
     protected $blockDataFactory = null;
 
+    /** @var callable|null */
     protected $templateNormalizer = null;
+
+    protected bool $discoveredSchemasRegistered = false;
 
     public function __construct(
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
-        protected BlockDiscovery $blockDiscovery,
-        protected PresetDiscovery $presetDiscovery,
+        protected DiscoveryRoots $discoveryRoots,
+        protected DiscoveryManifest $discoveryManifest,
         protected PreviewDataCollector $previewDataCollector,
         protected BlockDatastore $blockDatastore
     ) {}
@@ -34,7 +44,7 @@ class Craftile
      */
     public function discoverBlocksIn(string $namespace, string $directory): void
     {
-        $this->blockDiscovery->scan($namespace, $directory);
+        $this->discoveryRoots->addBlockRoot($namespace, $directory);
     }
 
     /**
@@ -42,7 +52,54 @@ class Craftile
      */
     public function discoverPresetsIn(string $namespace, string $directory): void
     {
-        $this->presetDiscovery->scan($namespace, $directory);
+        $this->discoveryRoots->addPresetRoot($namespace, $directory);
+    }
+
+    /**
+     * Register deferred discovered block schemas and presets.
+     */
+    public function registerDiscoveredSchemas(): void
+    {
+        if ($this->discoveredSchemasRegistered) {
+            return;
+        }
+
+        $manifest = $this->discoveryManifest->get();
+
+        foreach ($manifest['blocks'] as $block) {
+            $class = (string) $block['class'];
+
+            try {
+                if (! is_subclass_of((string) $class, BlockInterface::class)) {
+                    throw new \InvalidArgumentException("Discovered block class {$class} must implement ".BlockInterface::class);
+                }
+
+                $this->registerBlock($class);
+            } catch (Throwable $e) {
+                throw DiscoveredSchemaRegistrationException::forBlock($class, $block['path'] ?? null, $e);
+            }
+        }
+
+        foreach ($manifest['presets'] as $preset) {
+            $class = (string) $preset['class'];
+
+            try {
+                if (! is_subclass_of((string) $class, BlockPreset::class)) {
+                    throw new \InvalidArgumentException("Discovered preset class {$class} must extend ".BlockPreset::class);
+                }
+
+                $this->registerDiscoveredPreset($class);
+            } catch (Throwable $e) {
+                throw DiscoveredSchemaRegistrationException::forPreset($class, $preset['path'] ?? null, $e);
+            }
+        }
+
+        $this->discoveredSchemasRegistered = true;
+    }
+
+    public function discoveredSchemasRegistered(): bool
+    {
+        return $this->discoveredSchemasRegistered;
     }
 
     /**
@@ -74,6 +131,24 @@ class Craftile
         foreach ($blockClasses as $blockClass) {
             $this->registerBlock($blockClass);
         }
+    }
+
+    /**
+     * Register a discovered preset by its class name.
+     */
+    protected function registerDiscoveredPreset(string $presetClass): void
+    {
+        $type = $presetClass::getType();
+
+        if ($type === null) {
+            return;
+        }
+
+        if (class_exists($type) && is_subclass_of($type, BlockInterface::class)) {
+            $type = $type::type();
+        }
+
+        $this->schemaRegistry->registerPreset($type, $presetClass);
     }
 
     /**
@@ -159,7 +234,7 @@ class Craftile
     /**
      * Start tracking a block (delegates to PreviewDataCollector).
      */
-    public function startBlock(string $blockId, $blockContext): void
+    public function startBlock(string $blockId, BlockData $blockContext): void
     {
         $this->previewDataCollector->startBlock($blockId, $blockContext);
     }

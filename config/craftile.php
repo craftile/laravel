@@ -6,13 +6,13 @@ use Craftile\Laravel\BlockData;
 return [
     'discovery' => [
         'enabled' => true,
-        'paths' => [
-            // Add your custom block paths here
-            // Example: app_path('Blocks')
+
+        'blocks' => [
+            // Example: 'App\\Blocks' => app_path('Blocks'),
         ],
-        'namespaces' => [
-            // Namespace mappings for discovery
-            // Example: 'App\\Blocks' => app_path('Blocks')
+
+        'presets' => [
+            // Example: 'App\\BlockPresets' => app_path('BlockPresets'),
         ],
     ],
 
