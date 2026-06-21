@@ -14,10 +14,12 @@ use Closure;
  */
 class EnsureBlockIds
 {
-    public function handle(array $data, Closure $next): mixed
+    public function handle(TemplatePayload $payload, Closure $next): mixed
     {
+        $data = $payload->data;
+
         if (! isset($data['blocks']) || empty($data['blocks'])) {
-            return $next($data);
+            return $next($payload);
         }
 
         $blocks = $data['blocks'];
@@ -50,9 +52,9 @@ class EnsureBlockIds
             $normalized[$blockId] = $block;
         }
 
-        $data['blocks'] = $normalized;
+        $payload->data['blocks'] = $normalized;
 
-        return $next($data);
+        return $next($payload);
     }
 
     /**

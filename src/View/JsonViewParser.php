@@ -8,6 +8,7 @@ use Craftile\Laravel\View\TemplatePipeline\EnsureBlockIds;
 use Craftile\Laravel\View\TemplatePipeline\EnsureRegionsFormat;
 use Craftile\Laravel\View\TemplatePipeline\FlattenNestedStructure;
 use Craftile\Laravel\View\TemplatePipeline\ParseTemplateFile;
+use Craftile\Laravel\View\TemplatePipeline\TemplatePayload;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Pipeline;
 
@@ -53,7 +54,7 @@ class JsonViewParser
      */
     protected function runPipeline(string $path): array
     {
-        return Pipeline::send($path)
+        return Pipeline::send(new TemplatePayload($path))
             ->through([
                 ParseTemplateFile::class,
                 ApplyUserNormalizer::class,
@@ -61,7 +62,8 @@ class JsonViewParser
                 EnsureRegionsFormat::class,
                 FlattenNestedStructure::class,
             ])
-            ->thenReturn();
+            ->thenReturn()
+            ->data;
     }
 
     /**

@@ -14,11 +14,10 @@ use Craftile\Laravel\Facades\Craftile;
  */
 class ApplyUserNormalizer
 {
-    public function handle(array $data, Closure $next): mixed
+    public function handle(TemplatePayload $payload, Closure $next): mixed
     {
-        // Apply user's custom normalizer (if registered)
-        $data = Craftile::normalizeTemplate($data);
+        $payload->data = Craftile::normalizeTemplate($payload->data, $payload->path);
 
-        return $next($data);
+        return $next($payload);
     }
 }

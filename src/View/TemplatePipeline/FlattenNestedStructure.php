@@ -18,13 +18,13 @@ class FlattenNestedStructure
         protected BlockFlattener $flattener
     ) {}
 
-    public function handle(array $data, Closure $next): mixed
+    public function handle(TemplatePayload $payload, Closure $next): mixed
     {
-        if ($this->flattener->hasNestedStructure($data)) {
-            $data = $this->flattener->flattenNestedStructure($data);
-            unset($data['_idMappings']);
+        if ($this->flattener->hasNestedStructure($payload->data)) {
+            $payload->data = $this->flattener->flattenNestedStructure($payload->data);
+            unset($payload->data['_idMappings']);
         }
 
-        return $next($data);
+        return $next($payload);
     }
 }

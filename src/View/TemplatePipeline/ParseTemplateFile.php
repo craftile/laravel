@@ -23,30 +23,32 @@ class ParseTemplateFile
         $this->phpTemplateExtensions = config('craftile.php_template_extensions', ['craft.php']);
     }
 
-    public function handle(string $path, Closure $next): mixed
+    public function handle(TemplatePayload $payload, Closure $next): mixed
     {
+        $path = $payload->path;
+
         if (! file_exists($path)) {
             throw new JsonViewException("Template file not found: {$path}", $path);
         }
 
         // Check if this is a PHP template
         if ($this->isPhpTemplate($path)) {
-            $data = $this->evaluatePhpTemplate($path);
+            $payload->data = $this->evaluatePhpTemplate($path);
 
-            return $next($data);
+            return $next($payload);
         }
 
         // Parse JSON/YAML
         $content = file_get_contents($path);
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        $data = match ($extension) {
+        $payload->data = match ($extension) {
             'json' => $this->parseJson($content, $path),
             'yml', 'yaml' => $this->parseYaml($content, $path),
             default => throw new JsonViewException("Unsupported template format: {$extension}", $path)
         };
 
-        return $next($data);
+        return $next($payload);
     }
 
     /**

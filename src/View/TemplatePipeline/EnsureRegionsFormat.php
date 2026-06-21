@@ -13,10 +13,12 @@ use Closure;
  */
 class EnsureRegionsFormat
 {
-    public function handle(array $data, Closure $next): mixed
+    public function handle(TemplatePayload $payload, Closure $next): mixed
     {
+        $data = $payload->data;
+
         if (isset($data['regions'])) {
-            return $next($data);
+            return $next($payload);
         }
 
         $blocks = $data['blocks'] ?? [];
@@ -28,13 +30,13 @@ class EnsureRegionsFormat
             default => []
         };
 
-        $data['regions'] = [
+        $payload->data['regions'] = [
             [
                 'name' => $regionName,
                 'blocks' => $blockOrder,
             ],
         ];
 
-        return $next($data);
+        return $next($payload);
     }
 }
