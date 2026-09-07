@@ -11,6 +11,7 @@ use Craftile\Laravel\View\NodeTransformers\Concerns\HandlesLiterals;
 use Stillat\BladeParser\Document\Document;
 use Stillat\BladeParser\Nodes\AbstractNode;
 use Stillat\BladeParser\Nodes\Components\ComponentNode;
+use Stillat\BladeParser\Nodes\Components\ParameterType;
 
 class CraftileBlockTagTransformer implements ComponentCompilerAwareInterface, NodeTransformerInterface
 {
@@ -34,9 +35,44 @@ class CraftileBlockTagTransformer implements ComponentCompilerAwareInterface, No
         $type = $this->extractComponentAttributeValue($node, 'type');
         $id = $this->extractComponentAttributeValue($node, 'id');
         $propertiesExpr = $this->extractComponentPropertiesExpr($node);
+        $keepExpr = $this->extractKeepExpr($node);
 
-        $compiled = $this->compileBlock($type, $id, $propertiesExpr, $node, $document);
+        $compiled = $this->compileBlock($type, $id, $propertiesExpr, $node, $document, $keepExpr);
 
         return $this->createLiteralNode($compiled);
+    }
+
+    /**
+     * Extract the keep attribute as a PHP expression: bare `keep` means true, `:keep="expr"` passes the expression.
+     */
+    protected function extractKeepExpr(ComponentNode $node): string
+    {
+        $attribute = collect($node->parameters)->firstWhere(fn ($param) => $param->materializedName === 'keep');
+
+        if (! $attribute) {
+            return 'false';
+        }
+
+        $value = $attribute->value;
+
+        if ($attribute->type === ParameterType::DynamicVariable ||
+            $attribute->type === ParameterType::ShorthandDynamicVariable) {
+            if (strlen($value) >= 2 && ($value[0] === '"' || $value[0] === "'") &&
+                $value[0] === $value[strlen($value) - 1]) {
+                $value = substr($value, 1, -1);
+            }
+
+            return $value;
+        }
+
+        if ($value === null || $value === '') {
+            return 'true';
+        }
+
+        if ($this->isBladeLiteral($value)) {
+            $value = $attribute->valueNode->content;
+        }
+
+        return in_array(strtolower(trim($value, '"\'')), ['false', '0', ''], true) ? 'false' : 'true';
     }
 }

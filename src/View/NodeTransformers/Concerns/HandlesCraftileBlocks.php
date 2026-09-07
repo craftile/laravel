@@ -30,7 +30,7 @@ trait HandlesCraftileBlocks
      * - Preview collector only stores block data once per semantic ID
      * - Editor "select one, highlight all" behavior is preserved
      */
-    protected function compileBlock(string $type, string $id, string $propertiesExpr, AbstractNode $node, ?Document $document): string
+    protected function compileBlock(string $type, string $id, string $propertiesExpr, AbstractNode $node, ?Document $document, string $keepExpr = 'false'): string
     {
         $schema = craftile()->getBlockSchema($type);
 
@@ -68,17 +68,17 @@ trait HandlesCraftileBlocks
             {$parentIdVar} = null;
         }
 
-        {$blockDataVar} = BlockDatastore::getBlock({$idVar}, ['parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}]);
+        {$blockDataVar} = BlockDatastore::getBlock({$idVar}, ['parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}, 'keepInTree' => (bool) ({$keepExpr})]);
 
         if (!{$blockDataVar}) {
-            {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}]);
+            {$blockDataVar} = craftile()->createBlockData(['id' => {$idVar}, 'type' => '{$type}', 'parentId' => {$parentIdVar}, 'semanticId' => '{$id}', 'static' => true, 'repeated' => {$repeatedExpr}, 'keepInTree' => (bool) ({$keepExpr})]);
         }
         ?>
         <?php if (craftile()->inPreview()) {
-            craftile()->startBlock({$idVar}, $blockDataVar);
+            craftile()->startBlock({$idVar}, {$blockDataVar});
         } ?>
 
-        <?php if (!{$blockDataVar}->isGhost() && craftile()->shouldRenderBlock($blockDataVar)): ?>
+        <?php if (!{$blockDataVar}->isGhost() && craftile()->shouldRenderBlock({$blockDataVar})): ?>
 
         {$wrapperOpening}
         {$compiler->compile($schema, $hash, $propertiesExpr)}
@@ -90,7 +90,7 @@ trait HandlesCraftileBlocks
             craftile()->endBlock({$idVar});
         } ?>
 
-        <?php unset($blockDataVar); ?>
+        <?php unset({$blockDataVar}); ?>
         PHP;
 
         if ($this->componentCompiler !== null) {

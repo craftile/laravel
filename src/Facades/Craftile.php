@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static void registerPropertyTransformer(string $type, PropertyTransformerInterface|callable $transformer)
  * @method static string generateChildId(string $parentId, string $childLocalId)
  * @method static void startRegion(string $regionId, ?string $regionName = null)
+ * @method static void startBlock(string $blockId, BlockData $blockContext)
+ * @method static void endBlock(string $blockId)
  * @method static void endRegion(string $regionId)
  * @method static void resolveRegionViewUsing(callable $resolver)
  * @method static string resolveRegionView(string $regionId)

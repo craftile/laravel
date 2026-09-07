@@ -63,8 +63,26 @@ class CraftileBlockDirectiveTransformer implements ComponentCompilerAwareInterfa
             $this->throwError("Second @{$blockDirective} argument (id) must be a literal string.", $node);
         }
 
-        $compiled = $this->compileBlock($type, $id, $dataExpr, $node, $document);
+        $keepExpr = $args->count() > 3
+            ? $this->parseKeepArgument($args[3], $blockDirective, $node)
+            : 'false';
+
+        $compiled = $this->compileBlock($type, $id, $dataExpr, $node, $document, $keepExpr);
 
         return $this->createLiteralNode($compiled);
+    }
+
+    /**
+     * Parse the optional keep(...) fourth argument into a PHP expression.
+     */
+    protected function parseKeepArgument(string $argument, string $blockDirective, DirectiveNode $node): string
+    {
+        if (! preg_match('/^\s*keep\s*\((.*)\)\s*$/s', $argument, $matches)) {
+            $this->throwError("Fourth @{$blockDirective} argument must be keep() or keep(expression).", $node);
+        }
+
+        $expression = trim($matches[1]);
+
+        return $expression === '' ? 'true' : $expression;
     }
 }

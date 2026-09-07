@@ -215,6 +215,9 @@ protected static array $accepts = ['*']; // Accept any child type
 // or
 protected static array $accepts = ['button', 'text']; // Accept specific types
 
+// Exclude types even when they match accepts (supports the same patterns)
+protected static array $rejects = ['@theme/section-*'];
+
 // In your block template
 @children {{-- Renders all child blocks --}}
 ```

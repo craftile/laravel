@@ -31,7 +31,7 @@ trait HandlesComponentAttributes
     protected function extractComponentPropertiesExpr(ComponentNode $tag): string
     {
         $attributes = collect($tag->parameters)->filter(function ($attr) {
-            return ! in_array($attr->materializedName, ['type', 'id']);
+            return ! in_array($attr->materializedName, ['type', 'id', 'keep']);
         });
 
         if ($attributes->isEmpty()) {

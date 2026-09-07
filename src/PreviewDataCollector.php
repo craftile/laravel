@@ -80,11 +80,29 @@ class PreviewDataCollector
 
     /**
      * Start tracking a block.
+     */
+    public function startBlock(string $blockId, BlockData $blockData): void
+    {
+        if ($blockData->parentId) {
+            $this->addToRenderedChildren($blockData->parentId, $blockId);
+        } elseif ($this->currentRegion && isset($this->regions[$this->currentRegion])) {
+            if (! in_array($blockId, $this->regions[$this->currentRegion]['blocks'])) {
+                $this->regions[$this->currentRegion]['blocks'][] = $blockId;
+            }
+        }
+
+        if ($blockData->disabled || $blockData->ghost || craftile()->shouldRenderBlock($blockData)) {
+            $this->collectBlock($blockId, $blockData);
+        }
+    }
+
+    /**
+     * Collect a block's data into the preview payload.
      *
      * Prevents duplicate collection of static blocks in loops
      * Automatically collects ghost children
      */
-    public function startBlock(string $blockId, BlockData $blockData): void
+    public function collectBlock(string $blockId, BlockData $blockData): void
     {
         // For static blocks, only store block data if not already collected
         if ($blockData->static && isset($this->blocks[$blockId])) {
@@ -102,20 +120,6 @@ class PreviewDataCollector
                         $this->blocks[$childId] = $childBlock->toArray();
                         $this->addToRenderedChildren($blockId, $childId);
                     }
-                }
-            }
-        }
-
-        if ($blockData->parentId) {
-            $this->addToRenderedChildren($blockData->parentId, $blockId);
-        }
-
-        if ($this->currentRegion) {
-            $currentRegion = $this->currentRegion;
-
-            if (isset($this->regions[$currentRegion])) {
-                if (! $blockData->parentId && ! in_array($blockId, $this->regions[$currentRegion]['blocks'])) {
-                    $this->regions[$currentRegion]['blocks'][] = $blockId;
                 }
             }
         }
@@ -146,6 +150,17 @@ class PreviewDataCollector
     /**
      * Collect all static/repeated children that may not have been rendered.
      * Groups them with other static/repeated blocks, or at the end if none rendered.
+     *
+     * Disabled blocks never render their body, so none of their children call
+     * startBlock. For those we recover the entire child subtree (not just
+     * static/repeated) so the editor sidebar still shows the complete tree.
+     *
+     * Otherwise a missing static/repeated child was skipped by the template
+     * itself (a false condition, an empty loop). It is only recovered when the
+     * persisted data asks to keep it in the tree.
+     *
+     * A child that was reached but not collected already holds its slot in the
+     * rendered children list, so it is neither missing nor recovered.
      */
     private function collectUnrenderedStaticChildren(): void
     {
@@ -156,11 +171,17 @@ class PreviewDataCollector
                 continue;
             }
 
+            $parentDisabled = $blockData['disabled'] ?? false;
+
             // Find unrendered static/repeated children from BlockDatastore
             $unrenderedStatic = [];
 
             foreach ($childrenIds as $childId) {
                 if (isset($this->blocks[$childId])) {
+                    continue;
+                }
+
+                if (in_array($childId, $this->renderedChildren[$blockId] ?? [])) {
                     continue;
                 }
 
@@ -170,8 +191,7 @@ class PreviewDataCollector
                     continue;
                 }
 
-                // Only collect static or repeated blocks (and their entire tree)
-                if ($childBlock->static || $childBlock->repeated) {
+                if ($parentDisabled || $this->shouldRecoverUnrenderedChild($childBlock)) {
                     $this->collectBlockTree($childId);
                     $unrenderedStatic[] = $childId;
                 }
@@ -204,6 +224,11 @@ class PreviewDataCollector
             array_splice($renderedChildren, $insertionIndex, 0, $unrenderedStatic);
             $this->renderedChildren[$blockId] = $renderedChildren;
         }
+    }
+
+    private function shouldRecoverUnrenderedChild(BlockData $childBlock): bool
+    {
+        return ($childBlock->static || $childBlock->repeated) && $childBlock->keepInTree;
     }
 
     /**
@@ -295,6 +320,7 @@ class PreviewDataCollector
         $this->regionsAfterContent = [];
         $this->currentLayer = 'beforeContent';
         $this->inContentRegion = false;
+        $this->renderedChildren = [];
     }
 
     /**
