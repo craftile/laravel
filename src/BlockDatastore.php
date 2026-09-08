@@ -107,10 +107,6 @@ class BlockDatastore
             return [];
         }
 
-        if (! is_array($template)) {
-            return [];
-        }
-
         $blocks = $template['blocks'] ?? [];
 
         $this->assignBlockIndices($blocks, $template);

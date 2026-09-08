@@ -4,7 +4,7 @@
 
 [![Latest Version](https://img.shields.io/packagist/v/craftile/laravel?style=flat-square)](https://packagist.org/packages/craftile/laravel)
 [![PHP Version](https://img.shields.io/badge/php-%5E8.2-blue?style=flat-square)](https://php.net)
-[![Laravel Version](https://img.shields.io/badge/laravel-10%2B-red?style=flat-square)](https://laravel.com)
+[![Laravel Version](https://img.shields.io/badge/laravel-11%20%7C%2012%20%7C%2013-red?style=flat-square)](https://laravel.com)
 
 This package provides Laravel integration for the [Craftile Visual Editor](https://github.com/craftile/editor), enabling you to create block-based content management systems with Blade templates.
 
