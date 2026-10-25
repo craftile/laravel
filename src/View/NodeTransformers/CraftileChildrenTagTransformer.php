@@ -63,8 +63,8 @@ class CraftileChildrenTagTransformer implements NodeTransformerInterface
             if (craftile()->inPreview()) {
                 echo \'<!--BEGIN children: \' . $block->id . \'-->\';
             }
-            $__childrenFilePath = app(\\Craftile\\Laravel\\View\\BlockCacheManager::class)->getChildrenFilePath($block->id);
-            if(file_exists($__childrenFilePath)) {
+            $__childrenFilePath = app(\\Craftile\\Laravel\\View\\BlockCacheManager::class)->getChildrenFilePathForBlock($block);
+            if($__childrenFilePath !== null && file_exists($__childrenFilePath)) {
                 // Extract parent context if available
                 if (isset($__craftileContext)) {
                     extract($__craftileContext);

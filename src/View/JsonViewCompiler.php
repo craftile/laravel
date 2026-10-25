@@ -209,11 +209,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
                 continue;
             }
 
-            if (! empty($blockData['children'])) {
-                $this->compileChildrenToFile($blockData, $template, $path);
-            } else {
-                $this->cacheManager->flushChildrenFile($blockData['id']);
-            }
+            $this->compileChildrenToFile($blockData, $template, $path);
         }
     }
 
@@ -222,6 +218,9 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
      */
     protected function compileBlockSelectively($blockData, $template, $path): string
     {
+        // Written even on a cache hit: the children file's key also depends on the children's data
+        $this->compileChildrenToFile($blockData, $template, $path);
+
         $cacheKey = $this->cacheManager->getCacheKey($blockData);
 
         if ($this->cacheManager->exists($cacheKey)) {
@@ -275,9 +274,6 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
             }
 
             $compiler = $this->findBlockCompiler($schema);
-
-            // Compile children to file if block has them
-            $this->compileChildrenToFile($blockData, $template, $path);
 
             $compiledBlock = $compiler->compile($schema, $hash, '');
 
@@ -354,11 +350,13 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
         }
 
         $childrenCode = '';
+        $children = [];
         foreach ($blockData['children'] as $childId) {
             if (! isset($template['blocks'][$childId])) {
                 throw new JsonViewException("Child block '{$childId}' referenced by block '{$blockData['id']}' but not defined in blocks section", $path);
             }
             $childData = $template['blocks'][$childId];
+            $children[] = $childData;
 
             // Skip static children - they render via @craftileBlock in templates
             if ($childData['static'] ?? false) {
@@ -378,6 +376,6 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
             return null;
         }
 
-        return $this->cacheManager->writeChildrenFile($blockData['id'], $childrenCode);
+        return $this->cacheManager->writeChildrenFile($blockData['id'], $childrenCode, $this->cacheManager->childrenKey($children));
     }
 }

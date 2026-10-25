@@ -2,6 +2,7 @@
 
 namespace Craftile\Laravel\View;
 
+use Craftile\Laravel\BlockData;
 use Illuminate\Filesystem\Filesystem;
 
 class BlockCacheManager
@@ -76,11 +77,11 @@ class BlockCacheManager
 
     /**
      * Delete all cache files for a specific block ID.
+     *
+     * Children files are kept: they are keyed by content and required by compiled views at render time.
      */
     public function flushBlock(string $blockId): bool
     {
-        $this->flushChildrenFile($blockId);
-
         $basePath = config('view.compiled');
         $pattern = "{$basePath}/craftile-{$blockId}-*.php";
 
@@ -100,30 +101,79 @@ class BlockCacheManager
     }
 
     /**
-     * Get the compiled children file path for a block.
+     * Generate a key for a block's children from what their compiled code depends on.
+     *
+     * Settings are read at render time, so only the order, id, type, static and ghost flags matter.
      */
-    public function getChildrenFilePath(string $blockId): string
+    public function childrenKey(array $children): string
+    {
+        $signature = array_map(fn (array $child) => [
+            (string) ($child['id'] ?? ''),
+            (string) ($child['type'] ?? ''),
+            (bool) ($child['static'] ?? false),
+            (bool) ($child['ghost'] ?? false),
+        ], $children);
+
+        return hash('xxh128', json_encode(array_values($signature), JSON_UNESCAPED_SLASHES));
+    }
+
+    /**
+     * Get the compiled children file path for a block.
+     *
+     * Calling it without a children key is deprecated and only kept for views compiled by older versions.
+     */
+    public function getChildrenFilePath(string $blockId, ?string $childrenKey = null): string
     {
         $basePath = config('view.compiled');
-        $hash = hash('xxh128', $blockId);
+        $key = $childrenKey ?? hash('xxh128', $blockId);
 
-        return "{$basePath}/craftile-children-{$blockId}-{$hash}.php";
+        return "{$basePath}/craftile-children-{$blockId}-{$key}.php";
+    }
+
+    /**
+     * Get the compiled children file path for a block being rendered.
+     *
+     * Returns null when the block has no children or one of them is not loaded.
+     */
+    public function getChildrenFilePathForBlock(BlockData $block): ?string
+    {
+        if (empty($block->childrenIds())) {
+            return null;
+        }
+
+        $children = [];
+        foreach ($block->children() as $child) {
+            if (! $child) {
+                return null;
+            }
+
+            $children[] = [
+                'id' => $child->id,
+                'type' => $child->type,
+                'static' => $child->static,
+                'ghost' => $child->ghost,
+            ];
+        }
+
+        return $this->getChildrenFilePath($block->id, $this->childrenKey($children));
     }
 
     /**
      * Write compiled children code to file.
      */
-    public function writeChildrenFile(string $blockId, string $childrenCode): string
+    public function writeChildrenFile(string $blockId, string $childrenCode, ?string $childrenKey = null): string
     {
-        $filePath = $this->getChildrenFilePath($blockId);
+        $filePath = $this->getChildrenFilePath($blockId, $childrenKey);
 
-        $this->files->put($filePath, $childrenCode);
+        $this->files->replace($filePath, $childrenCode);
 
         return $filePath;
     }
 
     /**
-     * Delete the compiled children file for a specific block ID.
+     * Delete all compiled children files for a specific block ID.
+     *
+     * Not used during compilation: compiled views of other templates may still require these files.
      */
     public function flushChildrenFile(string $blockId): bool
     {
