@@ -14,8 +14,6 @@ class Craftile
     /** @var callable|null */
     protected $previewDetector = null;
 
-    protected ?bool $previewModeCache = null;
-
     /** @var callable|null */
     protected $regionViewResolver = null;
 
@@ -35,9 +33,7 @@ class Craftile
         protected BlockSchemaRegistry $schemaRegistry,
         protected PropertyTransformerRegistry $transformerRegistry,
         protected DiscoveryRoots $discoveryRoots,
-        protected DiscoveryManifest $discoveryManifest,
-        protected PreviewDataCollector $previewDataCollector,
-        protected BlockDatastore $blockDatastore
+        protected DiscoveryManifest $discoveryManifest
     ) {}
 
     /**
@@ -174,7 +170,7 @@ class Craftile
     public function detectPreviewUsing(callable $detector): void
     {
         $this->previewDetector = $detector;
-        $this->previewModeCache = null;
+        app(PreviewModeCache::class)->forget();
     }
 
     /**
@@ -218,18 +214,20 @@ class Craftile
      */
     public function inPreview(): bool
     {
-        if ($this->previewModeCache !== null) {
-            return $this->previewModeCache;
+        $cache = app(PreviewModeCache::class);
+
+        if ($cache->get() !== null) {
+            return $cache->get();
         }
 
         if ($this->previewDetector) {
-            return $this->previewModeCache = call_user_func($this->previewDetector);
+            return $cache->put(call_user_func($this->previewDetector));
         }
 
         // Fall back to default query parameter detection
         $parameter = config('craftile.preview.query_parameter', '_preview');
 
-        return $this->previewModeCache = request()->has($parameter);
+        return $cache->put(request()->has($parameter));
     }
 
     /**
@@ -237,7 +235,7 @@ class Craftile
      */
     public function startRegion(string $regionId, ?string $regionName = null): void
     {
-        $this->previewDataCollector->startRegion($regionId, $regionName);
+        $this->previewDataCollector()->startRegion($regionId, $regionName);
     }
 
     /**
@@ -245,7 +243,7 @@ class Craftile
      */
     public function endRegion(string $regionId): void
     {
-        $this->previewDataCollector->endRegion($regionId);
+        $this->previewDataCollector()->endRegion($regionId);
     }
 
     /**
@@ -253,7 +251,7 @@ class Craftile
      */
     public function startBlock(string $blockId, BlockData $blockContext): void
     {
-        $this->previewDataCollector->startBlock($blockId, $blockContext);
+        $this->previewDataCollector()->startBlock($blockId, $blockContext);
     }
 
     /**
@@ -261,7 +259,7 @@ class Craftile
      */
     public function endBlock(string $blockId): void
     {
-        $this->previewDataCollector->endBlock($blockId);
+        $this->previewDataCollector()->endBlock($blockId);
     }
 
     /**
@@ -299,7 +297,7 @@ class Craftile
      */
     public function startContent(): void
     {
-        $this->previewDataCollector->startContent();
+        $this->previewDataCollector()->startContent();
     }
 
     /**
@@ -307,7 +305,7 @@ class Craftile
      */
     public function endContent(): void
     {
-        $this->previewDataCollector->endContent();
+        $this->previewDataCollector()->endContent();
     }
 
     /**
@@ -315,7 +313,7 @@ class Craftile
      */
     public function beforeContent(): void
     {
-        $this->previewDataCollector->beforeContent();
+        $this->previewDataCollector()->beforeContent();
     }
 
     /**
@@ -323,7 +321,15 @@ class Craftile
      */
     public function afterContent(): void
     {
-        $this->previewDataCollector->afterContent();
+        $this->previewDataCollector()->afterContent();
+    }
+
+    /**
+     * Resolve the current request's collector, never kept on this singleton.
+     */
+    protected function previewDataCollector(): PreviewDataCollector
+    {
+        return app(PreviewDataCollector::class);
     }
 
     /**
@@ -372,7 +378,7 @@ class Craftile
      */
     public function resolveStaticBlockId(string $parentId, string $semanticId): ?string
     {
-        $allBlocks = $this->blockDatastore->getAllBlocks();
+        $allBlocks = app(BlockDatastore::class)->getAllBlocks();
 
         foreach ($allBlocks as $blockId => $block) {
             if ($block->static && $block->parentId === $parentId) {

@@ -38,8 +38,11 @@ class CraftileServiceProvider extends ServiceProvider
         $this->app->singleton(DiscoveryRoots::class);
         $this->app->singleton(DiscoveryManifest::class);
         $this->app->singleton(BlockFlattener::class);
-        $this->app->singleton(BlockDatastore::class);
-        $this->app->singleton(PreviewDataCollector::class);
+
+        // Per-request state: scoped so Octane and queue workers start each request empty.
+        $this->app->scoped(BlockDatastore::class);
+        $this->app->scoped(PreviewDataCollector::class);
+        $this->app->scoped(PreviewModeCache::class);
 
         $this->registerBlockCompilerRegistry();
         $this->registerBladeNodeTransformers();
@@ -106,19 +109,19 @@ class CraftileServiceProvider extends ServiceProvider
      */
     protected function registerJsonViewCompiler()
     {
-        $this->app->singleton(JsonViewParser::class);
+        $this->app->scoped(JsonViewParser::class);
 
         $this->app->singleton(BlockCacheManager::class, function ($app) {
             return new BlockCacheManager($app['files']);
         });
 
+        // The parser is not injected: it is scoped and this compiler lives for the whole worker.
         $this->app->singleton(JsonViewCompiler::class, function ($app) {
             return new JsonViewCompiler(
                 $app['files'],
                 $app['config']['view.compiled'],
                 $app['blade.compiler'],
-                $app[BlockCacheManager::class],
-                $app[JsonViewParser::class]
+                $app[BlockCacheManager::class]
             );
         });
 
@@ -132,6 +135,14 @@ class CraftileServiceProvider extends ServiceProvider
             });
 
             return $resolver;
+        });
+
+        // The engine skips the expiry check for paths it already rendered, and PHP keeps its stat
+        // cache across requests in long-lived workers. Reset both so the next request sees template
+        // changes, like a fresh PHP-FPM request does.
+        $this->app->terminating(function () {
+            $this->app->make('view.engine.resolver')->forget('jsonview');
+            clearstatcache();
         });
     }
 

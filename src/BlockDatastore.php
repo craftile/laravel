@@ -11,7 +11,7 @@ class BlockDatastore
      * In-memory cache of loaded BlockData instances
      * Structure: ['blockId' => BlockData].
      */
-    private static array $loadedBlocks = [];
+    private array $loadedBlocks = [];
 
     public function __construct(
         protected JsonViewParser $parser
@@ -31,11 +31,11 @@ class BlockDatastore
         foreach ($blocks as $blockId => $blockData) {
             $block = Craftile::createBlockData(
                 $blockData,
-                fn ($childId) => self::$loadedBlocks[$childId] ?? null
+                fn ($childId) => $this->loadedBlocks[$childId] ?? null
             );
 
             $block->setSourceFile($sourceFilePath);
-            self::$loadedBlocks[$blockId] = $block;
+            $this->loadedBlocks[$blockId] = $block;
         }
     }
 
@@ -47,7 +47,7 @@ class BlockDatastore
      */
     public function getBlock(string $blockId, array $overrides = []): ?BlockData
     {
-        $existingBlock = self::$loadedBlocks[$blockId] ?? null;
+        $existingBlock = $this->loadedBlocks[$blockId] ?? null;
 
         if (! $existingBlock) {
             return null;
@@ -72,7 +72,7 @@ class BlockDatastore
 
         $block = Craftile::createBlockData(
             $mergedData,
-            fn ($childId) => self::$loadedBlocks[$childId] ?? null
+            fn ($childId) => $this->loadedBlocks[$childId] ?? null
         );
 
         $block->setSourceFile($existingBlock->getSourceFile());
@@ -85,7 +85,7 @@ class BlockDatastore
      */
     public function hasBlock(string $blockId): bool
     {
-        return isset(self::$loadedBlocks[$blockId]);
+        return isset($this->loadedBlocks[$blockId]);
     }
 
     /**
@@ -93,7 +93,7 @@ class BlockDatastore
      */
     public function getAllBlocks(): array
     {
-        return self::$loadedBlocks;
+        return $this->loadedBlocks;
     }
 
     /**
@@ -141,7 +141,7 @@ class BlockDatastore
      */
     public function clear(): void
     {
-        self::$loadedBlocks = [];
+        $this->loadedBlocks = [];
         $this->parser->clearCache();
     }
 }

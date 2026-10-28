@@ -17,7 +17,7 @@ class JsonViewParser
     /**
      * In-memory cache of parsed template data.
      */
-    private static array $cache = [];
+    private array $cache = [];
 
     /**
      * Parse and normalize template file with automatic caching.
@@ -28,8 +28,8 @@ class JsonViewParser
     public function parse(string $path): array
     {
         // Check in-memory cache first
-        if (isset(self::$cache[$path])) {
-            return self::$cache[$path];
+        if (isset($this->cache[$path])) {
+            return $this->cache[$path];
         }
 
         if (Craftile::inPreview()) {
@@ -41,7 +41,7 @@ class JsonViewParser
         }
 
         // Store in in-memory cache
-        self::$cache[$path] = $data;
+        $this->cache[$path] = $data;
 
         return $data;
     }
@@ -71,6 +71,6 @@ class JsonViewParser
      */
     public function clearCache(): void
     {
-        self::$cache = [];
+        $this->cache = [];
     }
 }

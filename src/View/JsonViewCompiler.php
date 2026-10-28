@@ -20,17 +20,19 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
 
     private BlockCacheManager $cacheManager;
 
-    private JsonViewParser $parser;
+    private ?JsonViewParser $parser;
 
     /**
      * Create a new compiler instance.
+     *
+     * Without a parser, the container's parser for the current request is used.
      *
      * @param  string  $cachePath
      * @return void
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct(Filesystem $files, $cachePath, BladeCompiler $blade, BlockCacheManager $cacheManager, JsonViewParser $parser)
+    public function __construct(Filesystem $files, $cachePath, BladeCompiler $blade, BlockCacheManager $cacheManager, ?JsonViewParser $parser = null)
     {
         parent::__construct($files, $cachePath);
 
@@ -64,7 +66,7 @@ class JsonViewCompiler extends Compiler implements CompilerInterface
     public function compileJsonFile(string $path): string
     {
         try {
-            $template = $this->parser->parse($path);
+            $template = ($this->parser ?? app(JsonViewParser::class))->parse($path);
         } catch (JsonViewException $e) {
             throw $e;
         } catch (Throwable $e) {

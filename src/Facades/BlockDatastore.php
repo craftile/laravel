@@ -18,6 +18,13 @@ use Illuminate\Support\Facades\Facade;
 class BlockDatastore extends Facade
 {
     /**
+     * The datastore is scoped, so always resolve the current request's instance.
+     *
+     * @var bool
+     */
+    protected static $cached = false;
+
+    /**
      * Get the registered name of the component.
      */
     protected static function getFacadeAccessor(): string
